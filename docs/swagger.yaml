@@ -1,0 +1,944 @@
+definitions:
+  dto.OrderCreateRequestDto:
+    properties:
+      product_id:
+        type: string
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  dto.OrderCreateResponseDto:
+    properties:
+      order_id:
+        type: string
+    required:
+    - order_id
+    type: object
+  dto.OrderFindResponseDto:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/utils.PaginationMetaDto'
+    type: object
+  dto.OrderResponseDto:
+    properties:
+      created_at:
+        type: string
+      delivery_destination_address:
+        type: string
+      delivery_source_address:
+        type: string
+      item:
+        $ref: '#/definitions/models.OrderItem'
+      order_id:
+        type: string
+      quantity:
+        type: integer
+      seller_id:
+        type: string
+      status:
+        type: string
+      total_price:
+        type: number
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.ProductCreateRequestDto:
+    properties:
+      description:
+        maxLength: 250
+        type: string
+      name:
+        maxLength: 30
+        type: string
+      price:
+        type: number
+    required:
+    - description
+    - name
+    - price
+    type: object
+  dto.ProductCreateResponseDto:
+    properties:
+      product_id:
+        type: string
+    required:
+    - product_id
+    type: object
+  dto.ProductFindResponseDto:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/utils.PaginationMetaDto'
+    type: object
+  dto.ProductResponseDto:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: string
+      seller_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.ProductUpdateRequestDto:
+    properties:
+      description:
+        maxLength: 250
+        type: string
+      name:
+        maxLength: 30
+        type: string
+      price:
+        type: number
+    type: object
+  dto.SellerFindResponseDto:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/utils.PaginationMetaDto'
+    type: object
+  dto.SellerLoginRequestDto:
+    properties:
+      email:
+        maxLength: 60
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.SellerLoginResponseDto:
+    properties:
+      tokens:
+        $ref: '#/definitions/dto.SellerRefreshTokenResponseDto'
+      user_id:
+        type: string
+    required:
+    - tokens
+    - user_id
+    type: object
+  dto.SellerRefreshTokenDto:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.SellerRefreshTokenResponseDto:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - access_token
+    - refresh_token
+    type: object
+  dto.SellerRegisterRequestDto:
+    properties:
+      email:
+        maxLength: 60
+        type: string
+      first_name:
+        maxLength: 30
+        type: string
+      last_name:
+        maxLength: 30
+        type: string
+      password:
+        type: string
+      pickup_address:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - pickup_address
+    type: object
+  dto.SellerRegisterResponseDto:
+    properties:
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  dto.SellerResponseDto:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      pickup_address:
+        type: string
+      seller_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.SellerUpdateRequestDto:
+    properties:
+      avatar:
+        type: string
+      first_name:
+        maxLength: 30
+        type: string
+      last_name:
+        maxLength: 30
+        type: string
+      password:
+        type: string
+      pickup_address:
+        type: string
+    type: object
+  dto.UserFindResponseDto:
+    properties:
+      data: {}
+      meta:
+        $ref: '#/definitions/utils.PaginationMetaDto'
+    type: object
+  dto.UserLoginRequestDto:
+    properties:
+      email:
+        maxLength: 60
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.UserLoginResponseDto:
+    properties:
+      tokens:
+        $ref: '#/definitions/dto.UserRefreshTokenResponseDto'
+      user_id:
+        type: string
+    required:
+    - tokens
+    - user_id
+    type: object
+  dto.UserRefreshTokenDto:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  dto.UserRefreshTokenResponseDto:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    required:
+    - access_token
+    - refresh_token
+    type: object
+  dto.UserRegisterRequestDto:
+    properties:
+      delivery_address:
+        type: string
+      email:
+        maxLength: 60
+        type: string
+      first_name:
+        maxLength: 30
+        type: string
+      last_name:
+        maxLength: 30
+        type: string
+      password:
+        type: string
+      role:
+        type: string
+    required:
+    - delivery_address
+    - email
+    - first_name
+    - last_name
+    - password
+    - role
+    type: object
+  dto.UserRegisterResponseDto:
+    properties:
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  dto.UserResponseDto:
+    properties:
+      avatar:
+        type: string
+      created_at:
+        type: string
+      delivery_address:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  dto.UserUpdateRequestDto:
+    properties:
+      avatar:
+        type: string
+      delivery_address:
+        type: string
+      first_name:
+        maxLength: 30
+        type: string
+      last_name:
+        maxLength: 30
+        type: string
+      password:
+        type: string
+    type: object
+  models.OrderItem:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      product_id:
+        type: string
+      seller_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  utils.PaginationMetaDto:
+    properties:
+      limit:
+        type: integer
+      offset:
+        type: integer
+      page:
+        type: integer
+    type: object
+info:
+  contact:
+    email: djourdan555@gmail.com
+    name: Dustin Jourdan
+    url: https://github.com/dinorain
+paths:
+  /order:
+    get:
+      consumes:
+      - application/json
+      description: Find all orders
+      parameters:
+      - description: pagination size
+        in: query
+        name: size
+        type: string
+      - description: pagination page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OrderFindResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find all orders
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: Admin create order
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.OrderCreateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OrderCreateResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: To register order
+      tags:
+      - Orders
+  /order/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Find existing order by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OrderResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find order
+      tags:
+      - Orders
+    put:
+      consumes:
+      - application/json
+      description: Seller accept order
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OrderResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Accept order
+      tags:
+      - Orders
+  /product:
+    get:
+      consumes:
+      - application/json
+      description: Find all products
+      parameters:
+      - description: pagination size
+        in: query
+        name: size
+        type: string
+      - description: pagination page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProductFindResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find all products
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Seller create product
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProductCreateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProductCreateResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: To create product
+      tags:
+      - Products
+  /product/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete existing product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: Delete product
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Find existing product by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProductResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find product
+      tags:
+      - Products
+    put:
+      consumes:
+      - application/json
+      description: Update existing product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProductUpdateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProductResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Update product
+      tags:
+      - Products
+  /seller:
+    get:
+      consumes:
+      - application/json
+      description: Admin find all sellers
+      parameters:
+      - description: pagination size
+        in: query
+        name: size
+        type: string
+      - description: pagination page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerFindResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find all sellers
+      tags:
+      - Sellers
+    post:
+      consumes:
+      - application/json
+      description: Admin create seller
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SellerRegisterRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerRegisterResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: To register seller
+      tags:
+      - Sellers
+  /seller/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete existing seller, admin only
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: Delete seller
+      tags:
+      - Sellers
+    get:
+      consumes:
+      - application/json
+      description: Find existing seller by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find seller
+      tags:
+      - Sellers
+    put:
+      consumes:
+      - application/json
+      description: Update existing seller
+      parameters:
+      - description: Seller ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SellerUpdateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Update seller
+      tags:
+      - Sellers
+  /seller/login:
+    post:
+      consumes:
+      - application/json
+      description: Seller login with email and password
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SellerLoginRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerLoginResponseDto'
+      summary: Seller login
+      tags:
+      - Sellers
+  /seller/logout:
+    post:
+      consumes:
+      - application/json
+      description: Delete current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: Seller logout
+      tags:
+      - Sellers
+  /seller/me:
+    get:
+      consumes:
+      - application/json
+      description: Get session id from token, find seller by uuid and returns it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find me
+      tags:
+      - Sellers
+  /seller/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SellerRefreshTokenDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SellerRefreshTokenResponseDto'
+      summary: Refresh access token
+      tags:
+      - Sellers
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Admin find all users
+      parameters:
+      - description: pagination size
+        in: query
+        name: size
+        type: string
+      - description: pagination page
+        in: query
+        name: page
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserFindResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find all users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Admin create user
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserRegisterRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserRegisterResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: To register user
+      tags:
+      - Users
+  /user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete existing user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Find existing user by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update existing user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserUpdateRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Update user
+      tags:
+      - Users
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: User login with email and password
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserLoginRequestDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserLoginResponseDto'
+      summary: User login
+      tags:
+      - Users
+  /user/logout:
+    post:
+      consumes:
+      - application/json
+      description: Delete current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      summary: User logout
+      tags:
+      - Users
+  /user/me:
+    get:
+      consumes:
+      - application/json
+      description: Get session id from token, find user by uuid and returns it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserResponseDto'
+      security:
+      - ApiKeyAuth: []
+      summary: Find me
+      tags:
+      - Users
+  /user/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token
+      parameters:
+      - description: Payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserRefreshTokenDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UserRefreshTokenResponseDto'
+      summary: Refresh access token
+      tags:
+      - Users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
