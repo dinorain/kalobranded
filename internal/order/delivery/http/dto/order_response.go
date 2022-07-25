@@ -11,7 +11,7 @@ import (
 type OrderResponseDto struct {
 	OrderID                    uuid.UUID        `json:"order_id"`
 	UserID                     uuid.UUID        `json:"user_id"`
-	SellerID                   uuid.UUID        `json:"seller_id"`
+	BrandID                   uuid.UUID        `json:"brand_id"`
 	Item                       models.OrderItem `json:"item"`
 	Quantity                   uint64           `json:"quantity"`
 	TotalPrice                 float64          `json:"total_price"`
@@ -26,7 +26,7 @@ func OrderResponseFromModel(order *models.Order) *OrderResponseDto {
 	return &OrderResponseDto{
 		OrderID:                    order.OrderID,
 		UserID:                     order.UserID,
-		SellerID:                   order.SellerID,
+		BrandID:                   order.BrandID,
 		Item:                       order.Item,
 		Quantity:                   order.Quantity,
 		TotalPrice:                 order.TotalPrice,

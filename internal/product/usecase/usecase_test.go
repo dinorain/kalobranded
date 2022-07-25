@@ -29,13 +29,13 @@ func TestProductUseCase_Create(t *testing.T) {
 	productUC := NewProductUseCase(cfg, apiLogger, productPGRepository, productRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()
@@ -59,64 +59,64 @@ func TestProductUseCase_FindAll(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sellerPGRepository := mock.NewMockProductPGRepository(ctrl)
-	sellerRedisRepository := mock.NewMockProductRedisRepository(ctrl)
+	brandPGRepository := mock.NewMockProductPGRepository(ctrl)
+	brandRedisRepository := mock.NewMockProductRedisRepository(ctrl)
 	apiLogger := logger.NewAppLogger(nil)
 
 	cfg := &config.Config{}
-	sellerUC := NewProductUseCase(cfg, apiLogger, sellerPGRepository, sellerRedisRepository)
+	brandUC := NewProductUseCase(cfg, apiLogger, brandPGRepository, brandRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()
 
-	sellerPGRepository.EXPECT().FindAll(gomock.Any(), nil).AnyTimes().Return(append([]models.Product{}, *mockProduct), nil)
+	brandPGRepository.EXPECT().FindAll(gomock.Any(), nil).AnyTimes().Return(append([]models.Product{}, *mockProduct), nil)
 
-	sellers, err := sellerUC.FindAll(ctx, nil)
+	brands, err := brandUC.FindAll(ctx, nil)
 	require.NoError(t, err)
-	require.NotNil(t, sellers)
-	require.Equal(t, len(sellers), 1)
+	require.NotNil(t, brands)
+	require.Equal(t, len(brands), 1)
 }
 
-func TestProductUseCase_FindAllBySellerId(t *testing.T) {
+func TestProductUseCase_FindAllByBrandId(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sellerPGRepository := mock.NewMockProductPGRepository(ctrl)
-	sellerRedisRepository := mock.NewMockProductRedisRepository(ctrl)
+	brandPGRepository := mock.NewMockProductPGRepository(ctrl)
+	brandRedisRepository := mock.NewMockProductRedisRepository(ctrl)
 	apiLogger := logger.NewAppLogger(nil)
 
 	cfg := &config.Config{}
-	sellerUC := NewProductUseCase(cfg, apiLogger, sellerPGRepository, sellerRedisRepository)
+	brandUC := NewProductUseCase(cfg, apiLogger, brandPGRepository, brandRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()
 
-	sellerPGRepository.EXPECT().FindAllBySellerId(gomock.Any(), sellerUUID, nil).AnyTimes().Return(append([]models.Product{}, *mockProduct), nil)
+	brandPGRepository.EXPECT().FindAllByBrandId(gomock.Any(), brandUUID, nil).AnyTimes().Return(append([]models.Product{}, *mockProduct), nil)
 
-	sellers, err := sellerUC.FindAllBySellerId(ctx, sellerUUID, nil)
+	brands, err := brandUC.FindAllByBrandId(ctx, brandUUID, nil)
 	require.NoError(t, err)
-	require.NotNil(t, sellers)
-	require.Equal(t, len(sellers), 1)
+	require.NotNil(t, brands)
+	require.Equal(t, len(brands), 1)
 }
 
 func TestProductUseCase_FindById(t *testing.T) {
@@ -133,13 +133,13 @@ func TestProductUseCase_FindById(t *testing.T) {
 	productUC := NewProductUseCase(cfg, apiLogger, productPGRepository, productRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()
@@ -169,13 +169,13 @@ func TestProductUseCase_CachedFindById(t *testing.T) {
 	productUC := NewProductUseCase(cfg, apiLogger, productPGRepository, productRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()
@@ -204,13 +204,13 @@ func TestProductUseCase_UpdateById(t *testing.T) {
 	productUC := NewProductUseCase(cfg, apiLogger, productPGRepository, productRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()
@@ -238,13 +238,13 @@ func TestProductUseCase_DeleteById(t *testing.T) {
 	productUC := NewProductUseCase(cfg, apiLogger, productPGRepository, productRedisRepository)
 
 	productID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	ctx := context.Background()

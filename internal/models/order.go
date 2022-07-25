@@ -18,7 +18,7 @@ const (
 type Order struct {
 	OrderID                    uuid.UUID `json:"order_id" db:"order_id"`
 	UserID                     uuid.UUID `json:"user_id" db:"user_id"`
-	SellerID                   uuid.UUID `json:"seller_id" db:"seller_id"`
+	BrandID                   uuid.UUID `json:"brand_id" db:"brand_id"`
 	Item                       OrderItem `json:"item" db:"item"`
 	Quantity                   uint64    `json:"quantity" db:"quantity"`
 	TotalPrice                 float64   `json:"total_price" db:"total_price"`

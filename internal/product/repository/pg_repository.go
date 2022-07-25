@@ -34,7 +34,7 @@ func (r *ProductRepository) Create(ctx context.Context, product *models.Product)
 		product.Name,
 		product.Description,
 		product.Price,
-		product.SellerID,
+		product.BrandID,
 	).StructScan(createdProduct); err != nil {
 		return nil, errors.Wrap(err, "ProductRepository.Create.QueryRowxContext")
 	}
@@ -51,7 +51,7 @@ func (r *ProductRepository) UpdateById(ctx context.Context, product *models.Prod
 		product.Name,
 		product.Description,
 		product.Price,
-		product.SellerID,
+		product.BrandID,
 	); err != nil {
 		return nil, errors.Wrap(err, "ProductRepository.Update.ExecContext")
 	} else {
@@ -74,11 +74,11 @@ func (r *ProductRepository) FindAll(ctx context.Context, pagination *utils.Pagin
 	return products, nil
 }
 
-// FindAllBySellerId Find products by seller uuid
-func (r *ProductRepository) FindAllBySellerId(ctx context.Context, sellerID uuid.UUID, pagination *utils.Pagination) ([]models.Product, error) {
+// FindAllByBrandId Find products by brand uuid
+func (r *ProductRepository) FindAllByBrandId(ctx context.Context, brandID uuid.UUID, pagination *utils.Pagination) ([]models.Product, error) {
 	var products []models.Product
-	if err := r.db.SelectContext(ctx, &products, findAllBySellerIdQuery, sellerID, pagination.GetLimit(), pagination.GetOffset()); err != nil {
-		return nil, errors.Wrap(err, "ProductPGRepository.FindAllBySellerId.SelectContext")
+	if err := r.db.SelectContext(ctx, &products, findAllByBrandIdQuery, brandID, pagination.GetLimit(), pagination.GetOffset()); err != nil {
+		return nil, errors.Wrap(err, "ProductPGRepository.FindAllByBrandId.SelectContext")
 	}
 
 	return products, nil

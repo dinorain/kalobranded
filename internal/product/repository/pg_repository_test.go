@@ -26,15 +26,15 @@ func TestProductRepository_Create(t *testing.T) {
 
 	productPGRepository := NewProductPGRepository(sqlxDB)
 
-	columns := []string{"product_id", "name", "description", "price", "seller_id", "created_at", "updated_at"}
+	columns := []string{"product_id", "name", "description", "price", "brand_id", "created_at", "updated_at"}
 	productUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productUUID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
@@ -42,7 +42,7 @@ func TestProductRepository_Create(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 		time.Now(),
 		time.Now(),
 	)
@@ -51,7 +51,7 @@ func TestProductRepository_Create(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 	).WillReturnRows(rows)
 
 	createdProduct, err := productPGRepository.Create(context.Background(), mockProduct)
@@ -71,15 +71,15 @@ func TestProductRepository_FindAll(t *testing.T) {
 
 	productPGRepository := NewProductPGRepository(sqlxDB)
 
-	columns := []string{"product_id", "name", "description", "price", "seller_id", "created_at", "updated_at"}
+	columns := []string{"product_id", "name", "description", "price", "brand_id", "created_at", "updated_at"}
 	productUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productUUID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
@@ -87,7 +87,7 @@ func TestProductRepository_FindAll(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 		time.Now(),
 		time.Now(),
 	)
@@ -105,7 +105,7 @@ func TestProductRepository_FindAll(t *testing.T) {
 	require.Nil(t, foundProducts)
 }
 
-func TestProductRepository_FindAllBySellerId(t *testing.T) {
+func TestProductRepository_FindAllByBrandId(t *testing.T) {
 	t.Parallel()
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -117,15 +117,15 @@ func TestProductRepository_FindAllBySellerId(t *testing.T) {
 
 	productPGRepository := NewProductPGRepository(sqlxDB)
 
-	columns := []string{"product_id", "name", "description", "price", "seller_id", "created_at", "updated_at"}
+	columns := []string{"product_id", "name", "description", "price", "brand_id", "created_at", "updated_at"}
 	productUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productUUID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
@@ -133,7 +133,7 @@ func TestProductRepository_FindAllBySellerId(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 		time.Now(),
 		time.Now(),
 	)
@@ -150,25 +150,25 @@ func TestProductRepository_FindAllBySellerId(t *testing.T) {
 	)
 
 	size := 10
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(mockProduct.SellerID, size, 0).WillReturnRows(rows)
-	foundProducts, err := productPGRepository.FindAllBySellerId(context.Background(), mockProduct.SellerID, utils.NewPaginationQuery(size, 1))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(mockProduct.BrandID, size, 0).WillReturnRows(rows)
+	foundProducts, err := productPGRepository.FindAllByBrandId(context.Background(), mockProduct.BrandID, utils.NewPaginationQuery(size, 1))
 	require.NoError(t, err)
 	require.NotNil(t, foundProducts)
 	require.Equal(t, len(foundProducts), 1)
 
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(mockProduct.SellerID, size, 10).WillReturnRows(rows)
-	foundProducts, err = productPGRepository.FindAllBySellerId(context.Background(), mockProduct.SellerID, utils.NewPaginationQuery(size, 2))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(mockProduct.BrandID, size, 10).WillReturnRows(rows)
+	foundProducts, err = productPGRepository.FindAllByBrandId(context.Background(), mockProduct.BrandID, utils.NewPaginationQuery(size, 2))
 	require.NoError(t, err)
 	require.Nil(t, foundProducts)
 
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(otherUUID, size, 0).WillReturnRows(otherRows)
-	foundProducts, err = productPGRepository.FindAllBySellerId(context.Background(), otherUUID, utils.NewPaginationQuery(size, 1))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(otherUUID, size, 0).WillReturnRows(otherRows)
+	foundProducts, err = productPGRepository.FindAllByBrandId(context.Background(), otherUUID, utils.NewPaginationQuery(size, 1))
 	require.NoError(t, err)
 	require.NotNil(t, foundProducts)
 	require.Equal(t, len(foundProducts), 1)
 
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(otherUUID, size, 10).WillReturnRows(otherRows)
-	foundProducts, err = productPGRepository.FindAllBySellerId(context.Background(), otherUUID, utils.NewPaginationQuery(size, 2))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(otherUUID, size, 10).WillReturnRows(otherRows)
+	foundProducts, err = productPGRepository.FindAllByBrandId(context.Background(), otherUUID, utils.NewPaginationQuery(size, 2))
 	require.NoError(t, err)
 	require.Nil(t, foundProducts)
 }
@@ -185,15 +185,15 @@ func TestProductRepository_FindById(t *testing.T) {
 
 	productPGRepository := NewProductPGRepository(sqlxDB)
 
-	columns := []string{"product_id", "name", "description", "price", "seller_id", "created_at", "updated_at"}
+	columns := []string{"product_id", "name", "description", "price", "brand_id", "created_at", "updated_at"}
 	productUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productUUID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
@@ -201,7 +201,7 @@ func TestProductRepository_FindById(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 		time.Now(),
 		time.Now(),
 	)
@@ -226,15 +226,15 @@ func TestProductRepository_UpdateById(t *testing.T) {
 
 	productPGRepository := NewProductPGRepository(sqlxDB)
 
-	columns := []string{"product_id", "name", "description", "price", "seller_id", "created_at", "updated_at"}
+	columns := []string{"product_id", "name", "description", "price", "brand_id", "created_at", "updated_at"}
 	productUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productUUID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	_ = sqlmock.NewRows(columns).AddRow(
@@ -242,7 +242,7 @@ func TestProductRepository_UpdateById(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 		time.Now(),
 		time.Now(),
 	)
@@ -253,7 +253,7 @@ func TestProductRepository_UpdateById(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 	).WillReturnResult(sqlmock.NewResult(0, 1))
 
 	updatedProduct, err := productPGRepository.UpdateById(context.Background(), mockProduct)
@@ -275,15 +275,15 @@ func TestProductRepository_DeleteById(t *testing.T) {
 
 	productPGRepository := NewProductPGRepository(sqlxDB)
 
-	columns := []string{"product_id", "name", "description", "price", "seller_id", "created_at", "updated_at"}
+	columns := []string{"product_id", "name", "description", "price", "brand_id", "created_at", "updated_at"}
 	productUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	mockProduct := &models.Product{
 		ProductID:   productUUID,
 		Name:        "Name",
 		Description: "Description",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 
 	_ = sqlmock.NewRows(columns).AddRow(
@@ -291,7 +291,7 @@ func TestProductRepository_DeleteById(t *testing.T) {
 		mockProduct.Name,
 		mockProduct.Description,
 		mockProduct.Price,
-		mockProduct.SellerID,
+		mockProduct.BrandID,
 		time.Now(),
 		time.Now(),
 	)

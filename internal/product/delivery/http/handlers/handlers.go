@@ -50,7 +50,7 @@ func NewProductHandlersHTTP(
 // Create
 // @Tags Products
 // @Summary To create product
-// @Description Seller create product
+// @Description Brand create product
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
@@ -127,8 +127,8 @@ func (h *productHandlersHTTP) FindAll() echo.HandlerFunc {
 		}
 		if role == "" {
 			userUUID, _ := uuid.Parse(userID)
-			if res, err := h.productUC.FindAllBySellerId(ctx, userUUID, pq); err != nil {
-				h.logger.Errorf("productUC.FindAllBySellerId: %v", err)
+			if res, err := h.productUC.FindAllByBrandId(ctx, userUUID, pq); err != nil {
+				h.logger.Errorf("productUC.FindAllByBrandId: %v", err)
 				return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
 			} else {
 				products = res
@@ -226,7 +226,7 @@ func (h *productHandlersHTTP) UpdateById() echo.HandlerFunc {
 			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
 		}
 
-		if role == "" && userID != product.SellerID.String() {
+		if role == "" && userID != product.BrandID.String() {
 			return httpErrors.NewForbiddenError(c, nil, h.cfg.Http.DebugErrorsResponse)
 		}
 
@@ -278,7 +278,7 @@ func (h *productHandlersHTTP) DeleteById() echo.HandlerFunc {
 			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
 		}
 
-		if role == "" && userID != product.SellerID.String() {
+		if role == "" && userID != product.BrandID.String() {
 			return httpErrors.NewForbiddenError(c, nil, h.cfg.Http.DebugErrorsResponse)
 		}
 
@@ -314,17 +314,17 @@ func (h *productHandlersHTTP) getSessionIDFromCtx(c echo.Context) (sessionID str
 	if role != "" {
 		userID, _ = claims["user_id"].(string)
 	} else {
-		userID, _ = claims["seller_id"].(string)
+		userID, _ = claims["brand_id"].(string)
 	}
 	return sessionID, userID, role, nil
 }
 
-func (h *productHandlersHTTP) registerReqToProductModel(r *dto.ProductCreateRequestDto, sellerID uuid.UUID) (*models.Product, error) {
+func (h *productHandlersHTTP) registerReqToProductModel(r *dto.ProductCreateRequestDto, brandID uuid.UUID) (*models.Product, error) {
 	productCandidate := &models.Product{
 		Name:        r.Name,
 		Description: r.Description,
 		Price:       r.Price,
-		SellerID:    sellerID,
+		BrandID:    brandID,
 	}
 
 	if err := productCandidate.PrepareCreate(); err != nil {

@@ -18,12 +18,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dinorain/kalobranded/config"
+	mockBrandUC "github.com/dinorain/kalobranded/internal/brand/mock"
 	"github.com/dinorain/kalobranded/internal/middlewares"
 	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/internal/order/delivery/http/dto"
 	"github.com/dinorain/kalobranded/internal/order/mock"
 	mockProductUC "github.com/dinorain/kalobranded/internal/product/mock"
-	mockSellerUC "github.com/dinorain/kalobranded/internal/seller/mock"
 	mockSessUC "github.com/dinorain/kalobranded/internal/session/mock"
 	mockUserUC "github.com/dinorain/kalobranded/internal/user/mock"
 	"github.com/dinorain/kalobranded/pkg/converter"
@@ -39,7 +39,7 @@ func TestOrdersHandler_Create(t *testing.T) {
 	orderUC := mock.NewMockOrderUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 	userUC := mockUserUC.NewMockUserUseCase(ctrl)
-	sellerUC := mockSellerUC.NewMockSellerUseCase(ctrl)
+	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	productUC := mockProductUC.NewMockProductUseCase(ctrl)
 
 	appLogger := logger.NewAppLogger(nil)
@@ -49,7 +49,7 @@ func TestOrdersHandler_Create(t *testing.T) {
 	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
 	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, sellerUC, productUC, sessUC)
+	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
 
 	productUUID := uuid.New()
 	reqDto := &dto.OrderCreateRequestDto{
@@ -61,7 +61,7 @@ func TestOrdersHandler_Create(t *testing.T) {
 	_ = json.NewEncoder(buf).Encode(reqDto)
 
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	sessUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -91,8 +91,8 @@ func TestOrdersHandler_Create(t *testing.T) {
 
 	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
 	userUC.EXPECT().CachedFindById(gomock.Any(), userUUID).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
-	productUC.EXPECT().CachedFindById(gomock.Any(), productUUID).AnyTimes().Return(&models.Product{ProductID: productUUID, SellerID: sellerUUID}, nil)
-	sellerUC.EXPECT().CachedFindById(gomock.Any(), sellerUUID).AnyTimes().Return(&models.Seller{SellerID: sellerUUID}, nil)
+	productUC.EXPECT().CachedFindById(gomock.Any(), productUUID).AnyTimes().Return(&models.Product{ProductID: productUUID, BrandID: brandUUID}, nil)
+	brandUC.EXPECT().CachedFindById(gomock.Any(), brandUUID).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
 	orderUC.EXPECT().Create(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{Item: models.OrderItem{ProductID: productUUID}}, nil)
 	require.NoError(t, h(ctx))
 	require.Equal(t, http.StatusCreated, res.Code)
@@ -108,7 +108,7 @@ func TestOrdersHandler_FindAll(t *testing.T) {
 	orderUC := mock.NewMockOrderUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 	userUC := mockUserUC.NewMockUserUseCase(ctrl)
-	sellerUC := mockSellerUC.NewMockSellerUseCase(ctrl)
+	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	productUC := mockProductUC.NewMockProductUseCase(ctrl)
 
 	appLogger := logger.NewAppLogger(nil)
@@ -118,24 +118,24 @@ func TestOrdersHandler_FindAll(t *testing.T) {
 	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
 	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, sellerUC, productUC, sessUC)
+	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
 
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 
 	var orders []models.Order
 
 	m := models.Order{
-		OrderID:  uuid.New(),
-		UserID:   userUUID,
-		SellerID: sellerUUID,
+		OrderID: uuid.New(),
+		UserID:  userUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -148,23 +148,23 @@ func TestOrdersHandler_FindAll(t *testing.T) {
 	userOrders := make([]models.Order, len(orders)+1)
 	copy(userOrders, orders)
 
-	m.SellerID = uuid.New()
+	m.BrandID = uuid.New()
 	userOrders = append(userOrders, m)
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	sessUUID := uuid.New()
 	claims["session_id"] = sessUUID.String()
-	claims["seller_id"] = sellerUUID.String()
+	claims["brand_id"] = brandUUID.String()
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	validToken, _ := token.SignedString([]byte("secret"))
 
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: sellerUUID, SessionID: sessUUID.String()}, nil)
-	orderUC.EXPECT().FindAllBySellerId(gomock.Any(), sellerUUID, gomock.Any()).AnyTimes().Return(orders, nil)
+	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
+	orderUC.EXPECT().FindAllByBrandId(gomock.Any(), brandUUID, gomock.Any()).AnyTimes().Return(orders, nil)
 	orderUC.EXPECT().FindAllByUserId(gomock.Any(), userUUID, gomock.Any()).AnyTimes().Return(userOrders, nil)
 	orderUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(userOrders, nil)
 
-	t.Run("Filtered view when accessed by seller", func(t *testing.T) {
+	t.Run("Filtered view when accessed by brand", func(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, "/order", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -255,7 +255,7 @@ func TestOrdersHandler_FindById(t *testing.T) {
 	orderUC := mock.NewMockOrderUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 	userUC := mockUserUC.NewMockUserUseCase(ctrl)
-	sellerUC := mockSellerUC.NewMockSellerUseCase(ctrl)
+	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	productUC := mockProductUC.NewMockProductUseCase(ctrl)
 
 	appLogger := logger.NewAppLogger(nil)
@@ -265,7 +265,7 @@ func TestOrdersHandler_FindById(t *testing.T) {
 	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
 	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, sellerUC, productUC, sessUC)
+	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/order/:id", nil)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -289,7 +289,7 @@ func TestOrdersHandler_AcceptById(t *testing.T) {
 	orderUC := mock.NewMockOrderUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 	userUC := mockUserUC.NewMockUserUseCase(ctrl)
-	sellerUC := mockSellerUC.NewMockSellerUseCase(ctrl)
+	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	productUC := mockProductUC.NewMockProductUseCase(ctrl)
 
 	appLogger := logger.NewAppLogger(nil)
@@ -299,22 +299,22 @@ func TestOrdersHandler_AcceptById(t *testing.T) {
 	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
 	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, sellerUC, productUC, sessUC)
+	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
 
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	orderUUID := uuid.New()
 	sessUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: sellerUUID, SessionID: sessUUID.String()}, nil)
-	orderUC.EXPECT().FindById(gomock.Any(), orderUUID).AnyTimes().Return(&models.Order{SellerID: sellerUUID}, nil)
-	orderUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{SellerID: sellerUUID}, nil)
+	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
+	orderUC.EXPECT().FindById(gomock.Any(), orderUUID).AnyTimes().Return(&models.Order{BrandID: brandUUID}, nil)
+	orderUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{BrandID: brandUUID}, nil)
 
-	t.Run("Success update by seller", func(t *testing.T) {
+	t.Run("Success update by brand", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["seller_id"] = sellerUUID.String()
+		claims["brand_id"] = brandUUID.String()
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
 
@@ -338,10 +338,10 @@ func TestOrdersHandler_AcceptById(t *testing.T) {
 		require.Equal(t, http.StatusOK, res.Code)
 	})
 
-	t.Run("Forbidden update by other seller", func(t *testing.T) {
+	t.Run("Forbidden update by other brand", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["seller_id"] = sessUUID.String()
+		claims["brand_id"] = sessUUID.String()
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
 

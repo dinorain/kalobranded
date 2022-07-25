@@ -30,18 +30,18 @@ func TestOrderUseCase_Create(t *testing.T) {
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -55,13 +55,13 @@ func TestOrderUseCase_Create(t *testing.T) {
 	orderPGRepository.EXPECT().Create(gomock.Any(), mockOrder).Return(&models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -82,27 +82,27 @@ func TestOrderUseCase_FindAll(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sellerPGRepository := mock.NewMockOrderPGRepository(ctrl)
-	sellerRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
+	brandPGRepository := mock.NewMockOrderPGRepository(ctrl)
+	brandRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
 	apiLogger := logger.NewAppLogger(nil)
 
 	cfg := &config.Config{}
-	sellerUC := NewOrderUseCase(cfg, apiLogger, sellerPGRepository, sellerRedisRepository)
+	brandUC := NewOrderUseCase(cfg, apiLogger, brandPGRepository, brandRedisRepository)
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -113,41 +113,41 @@ func TestOrderUseCase_FindAll(t *testing.T) {
 
 	ctx := context.Background()
 
-	sellerPGRepository.EXPECT().FindAll(gomock.Any(), nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
+	brandPGRepository.EXPECT().FindAll(gomock.Any(), nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
 
-	sellers, err := sellerUC.FindAll(ctx, nil)
+	brands, err := brandUC.FindAll(ctx, nil)
 	require.NoError(t, err)
-	require.NotNil(t, sellers)
-	require.Equal(t, len(sellers), 1)
+	require.NotNil(t, brands)
+	require.Equal(t, len(brands), 1)
 }
 
-func TestOrderUseCase_FindAllBySellerId(t *testing.T) {
+func TestOrderUseCase_FindAllByBrandId(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sellerPGRepository := mock.NewMockOrderPGRepository(ctrl)
-	sellerRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
+	brandPGRepository := mock.NewMockOrderPGRepository(ctrl)
+	brandRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
 	apiLogger := logger.NewAppLogger(nil)
 
 	cfg := &config.Config{}
-	sellerUC := NewOrderUseCase(cfg, apiLogger, sellerPGRepository, sellerRedisRepository)
+	brandUC := NewOrderUseCase(cfg, apiLogger, brandPGRepository, brandRedisRepository)
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -158,12 +158,12 @@ func TestOrderUseCase_FindAllBySellerId(t *testing.T) {
 
 	ctx := context.Background()
 
-	sellerPGRepository.EXPECT().FindAllBySellerId(gomock.Any(), mockOrder.SellerID, nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
+	brandPGRepository.EXPECT().FindAllByBrandId(gomock.Any(), mockOrder.BrandID, nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
 
-	sellers, err := sellerUC.FindAllBySellerId(ctx, mockOrder.SellerID, nil)
+	brands, err := brandUC.FindAllByBrandId(ctx, mockOrder.BrandID, nil)
 	require.NoError(t, err)
-	require.NotNil(t, sellers)
-	require.Equal(t, len(sellers), 1)
+	require.NotNil(t, brands)
+	require.Equal(t, len(brands), 1)
 }
 
 func TestOrderUseCase_FindAllByUserId(t *testing.T) {
@@ -172,27 +172,27 @@ func TestOrderUseCase_FindAllByUserId(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sellerPGRepository := mock.NewMockOrderPGRepository(ctrl)
-	sellerRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
+	brandPGRepository := mock.NewMockOrderPGRepository(ctrl)
+	brandRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
 	apiLogger := logger.NewAppLogger(nil)
 
 	cfg := &config.Config{}
-	sellerUC := NewOrderUseCase(cfg, apiLogger, sellerPGRepository, sellerRedisRepository)
+	brandUC := NewOrderUseCase(cfg, apiLogger, brandPGRepository, brandRedisRepository)
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -203,41 +203,41 @@ func TestOrderUseCase_FindAllByUserId(t *testing.T) {
 
 	ctx := context.Background()
 
-	sellerPGRepository.EXPECT().FindAllByUserId(gomock.Any(), mockOrder.UserID, nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
+	brandPGRepository.EXPECT().FindAllByUserId(gomock.Any(), mockOrder.UserID, nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
 
-	sellers, err := sellerUC.FindAllByUserId(ctx, mockOrder.UserID, nil)
+	brands, err := brandUC.FindAllByUserId(ctx, mockOrder.UserID, nil)
 	require.NoError(t, err)
-	require.NotNil(t, sellers)
-	require.Equal(t, len(sellers), 1)
+	require.NotNil(t, brands)
+	require.Equal(t, len(brands), 1)
 }
 
-func TestOrderUseCase_FindAllByUserSellerId(t *testing.T) {
+func TestOrderUseCase_FindAllByUserBrandId(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	sellerPGRepository := mock.NewMockOrderPGRepository(ctrl)
-	sellerRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
+	brandPGRepository := mock.NewMockOrderPGRepository(ctrl)
+	brandRedisRepository := mock.NewMockOrderRedisRepository(ctrl)
 	apiLogger := logger.NewAppLogger(nil)
 
 	cfg := &config.Config{}
-	sellerUC := NewOrderUseCase(cfg, apiLogger, sellerPGRepository, sellerRedisRepository)
+	brandUC := NewOrderUseCase(cfg, apiLogger, brandPGRepository, brandRedisRepository)
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -248,12 +248,12 @@ func TestOrderUseCase_FindAllByUserSellerId(t *testing.T) {
 
 	ctx := context.Background()
 
-	sellerPGRepository.EXPECT().FindAllByUserIdSellerId(gomock.Any(), mockOrder.UserID, mockOrder.SellerID, nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
+	brandPGRepository.EXPECT().FindAllByUserIdBrandId(gomock.Any(), mockOrder.UserID, mockOrder.BrandID, nil).AnyTimes().Return(append([]models.Order{}, *mockOrder), nil)
 
-	sellers, err := sellerUC.FindAllByUserIdSellerId(ctx, mockOrder.UserID, mockOrder.SellerID, nil)
+	brands, err := brandUC.FindAllByUserIdBrandId(ctx, mockOrder.UserID, mockOrder.BrandID, nil)
 	require.NoError(t, err)
-	require.NotNil(t, sellers)
-	require.Equal(t, len(sellers), 1)
+	require.NotNil(t, brands)
+	require.Equal(t, len(brands), 1)
 }
 
 func TestOrderUseCase_FindById(t *testing.T) {
@@ -271,18 +271,18 @@ func TestOrderUseCase_FindById(t *testing.T) {
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -319,18 +319,18 @@ func TestOrderUseCase_CachedFindById(t *testing.T) {
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -366,18 +366,18 @@ func TestOrderUseCase_UpdateById(t *testing.T) {
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -412,18 +412,18 @@ func TestOrderUseCase_DeleteById(t *testing.T) {
 
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,

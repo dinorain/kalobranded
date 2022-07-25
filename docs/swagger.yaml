@@ -36,7 +36,7 @@ definitions:
         type: string
       quantity:
         type: integer
-      seller_id:
+      brand_id:
         type: string
       status:
         type: string
@@ -87,7 +87,7 @@ definitions:
         type: number
       product_id:
         type: string
-      seller_id:
+      brand_id:
         type: string
       updated_at:
         type: string
@@ -103,13 +103,13 @@ definitions:
       price:
         type: number
     type: object
-  dto.SellerFindResponseDto:
+  dto.BrandFindResponseDto:
     properties:
       data: {}
       meta:
         $ref: '#/definitions/utils.PaginationMetaDto'
     type: object
-  dto.SellerLoginRequestDto:
+  dto.BrandLoginRequestDto:
     properties:
       email:
         maxLength: 60
@@ -120,24 +120,24 @@ definitions:
     - email
     - password
     type: object
-  dto.SellerLoginResponseDto:
+  dto.BrandLoginResponseDto:
     properties:
       tokens:
-        $ref: '#/definitions/dto.SellerRefreshTokenResponseDto'
+        $ref: '#/definitions/dto.BrandRefreshTokenResponseDto'
       user_id:
         type: string
     required:
     - tokens
     - user_id
     type: object
-  dto.SellerRefreshTokenDto:
+  dto.BrandRefreshTokenDto:
     properties:
       refresh_token:
         type: string
     required:
     - refresh_token
     type: object
-  dto.SellerRefreshTokenResponseDto:
+  dto.BrandRefreshTokenResponseDto:
     properties:
       access_token:
         type: string
@@ -147,7 +147,7 @@ definitions:
     - access_token
     - refresh_token
     type: object
-  dto.SellerRegisterRequestDto:
+  dto.BrandRegisterRequestDto:
     properties:
       email:
         maxLength: 60
@@ -169,14 +169,14 @@ definitions:
     - password
     - pickup_address
     type: object
-  dto.SellerRegisterResponseDto:
+  dto.BrandRegisterResponseDto:
     properties:
       user_id:
         type: string
     required:
     - user_id
     type: object
-  dto.SellerResponseDto:
+  dto.BrandResponseDto:
     properties:
       avatar:
         type: string
@@ -190,12 +190,12 @@ definitions:
         type: string
       pickup_address:
         type: string
-      seller_id:
+      brand_id:
         type: string
       updated_at:
         type: string
     type: object
-  dto.SellerUpdateRequestDto:
+  dto.BrandUpdateRequestDto:
     properties:
       avatar:
         type: string
@@ -334,7 +334,7 @@ definitions:
         type: number
       product_id:
         type: string
-      seller_id:
+      brand_id:
         type: string
       updated_at:
         type: string
@@ -423,7 +423,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Seller accept order
+      description: Brand accept order
       parameters:
       - description: Order ID
         in: path
@@ -471,7 +471,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Seller create product
+      description: Brand create product
       parameters:
       - description: Payload
         in: body
@@ -556,11 +556,11 @@ paths:
       summary: Update product
       tags:
       - Products
-  /seller:
+  /brand:
     get:
       consumes:
       - application/json
-      description: Admin find all sellers
+      description: Admin find all brands
       parameters:
       - description: pagination size
         in: query
@@ -576,42 +576,42 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerFindResponseDto'
+            $ref: '#/definitions/dto.BrandFindResponseDto'
       security:
       - ApiKeyAuth: []
-      summary: Find all sellers
+      summary: Find all brands
       tags:
-      - Sellers
+      - Brands
     post:
       consumes:
       - application/json
-      description: Admin create seller
+      description: Admin create brand
       parameters:
       - description: Payload
         in: body
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dto.SellerRegisterRequestDto'
+          $ref: '#/definitions/dto.BrandRegisterRequestDto'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerRegisterResponseDto'
+            $ref: '#/definitions/dto.BrandRegisterResponseDto'
       security:
       - ApiKeyAuth: []
-      summary: To register seller
+      summary: To register brand
       tags:
-      - Sellers
-  /seller/{id}:
+      - Brands
+  /brand/{id}:
     delete:
       consumes:
       - application/json
-      description: Delete existing seller, admin only
+      description: Delete existing brand, admin only
       parameters:
-      - description: Seller ID
+      - description: Brand ID
         in: path
         name: id
         required: true
@@ -623,31 +623,31 @@ paths:
           description: OK
       security:
       - ApiKeyAuth: []
-      summary: Delete seller
+      summary: Delete brand
       tags:
-      - Sellers
+      - Brands
     get:
       consumes:
       - application/json
-      description: Find existing seller by id
+      description: Find existing brand by id
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerResponseDto'
+            $ref: '#/definitions/dto.BrandResponseDto'
       security:
       - ApiKeyAuth: []
-      summary: Find seller
+      summary: Find brand
       tags:
-      - Sellers
+      - Brands
     put:
       consumes:
       - application/json
-      description: Update existing seller
+      description: Update existing brand
       parameters:
-      - description: Seller ID
+      - description: Brand ID
         in: path
         name: id
         required: true
@@ -657,42 +657,42 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dto.SellerUpdateRequestDto'
+          $ref: '#/definitions/dto.BrandUpdateRequestDto'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerResponseDto'
+            $ref: '#/definitions/dto.BrandResponseDto'
       security:
       - ApiKeyAuth: []
-      summary: Update seller
+      summary: Update brand
       tags:
-      - Sellers
-  /seller/login:
+      - Brands
+  /brand/login:
     post:
       consumes:
       - application/json
-      description: Seller login with email and password
+      description: Brand login with email and password
       parameters:
       - description: Payload
         in: body
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dto.SellerLoginRequestDto'
+          $ref: '#/definitions/dto.BrandLoginRequestDto'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerLoginResponseDto'
-      summary: Seller login
+            $ref: '#/definitions/dto.BrandLoginResponseDto'
+      summary: Brand login
       tags:
-      - Sellers
-  /seller/logout:
+      - Brands
+  /brand/logout:
     post:
       consumes:
       - application/json
@@ -704,27 +704,27 @@ paths:
           description: OK
       security:
       - ApiKeyAuth: []
-      summary: Seller logout
+      summary: Brand logout
       tags:
-      - Sellers
-  /seller/me:
+      - Brands
+  /brand/me:
     get:
       consumes:
       - application/json
-      description: Get session id from token, find seller by uuid and returns it
+      description: Get session id from token, find brand by uuid and returns it
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerResponseDto'
+            $ref: '#/definitions/dto.BrandResponseDto'
       security:
       - ApiKeyAuth: []
       summary: Find me
       tags:
-      - Sellers
-  /seller/refresh:
+      - Brands
+  /brand/refresh:
     post:
       consumes:
       - application/json
@@ -735,17 +735,17 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/dto.SellerRefreshTokenDto'
+          $ref: '#/definitions/dto.BrandRefreshTokenDto'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/dto.SellerRefreshTokenResponseDto'
+            $ref: '#/definitions/dto.BrandRefreshTokenResponseDto'
       summary: Refresh access token
       tags:
-      - Sellers
+      - Brands
   /user:
     get:
       consumes:

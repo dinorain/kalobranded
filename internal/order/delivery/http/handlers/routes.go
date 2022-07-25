@@ -6,5 +6,5 @@ func (h *orderHandlersHTTP) OrderMapRoutes() {
 	h.group.POST("", h.Create(), h.mw.IsUser)
 
 	h.group.GET("/:id", h.FindById())
-	h.group.POST("/:id", h.AcceptById(), h.mw.IsSeller)
+	h.group.POST("/:id", h.AcceptById(), h.mw.IsAdmin)
 }

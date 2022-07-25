@@ -12,12 +12,12 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/brand"
 	"github.com/dinorain/kalobranded/internal/middlewares"
 	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/internal/order"
 	"github.com/dinorain/kalobranded/internal/order/delivery/http/dto"
 	"github.com/dinorain/kalobranded/internal/product"
-	"github.com/dinorain/kalobranded/internal/seller"
 	"github.com/dinorain/kalobranded/internal/session"
 	"github.com/dinorain/kalobranded/internal/user"
 	"github.com/dinorain/kalobranded/pkg/constants"
@@ -34,7 +34,7 @@ type orderHandlersHTTP struct {
 	v         *validator.Validate
 	orderUC   order.OrderUseCase
 	userUC    user.UserUseCase
-	sellerUC  seller.SellerUseCase
+	brandUC   brand.BrandUseCase
 	productUC product.ProductUseCase
 	sessUC    session.SessUseCase
 }
@@ -49,11 +49,11 @@ func NewOrderHandlersHTTP(
 	v *validator.Validate,
 	orderUC order.OrderUseCase,
 	userUC user.UserUseCase,
-	sellerUC seller.SellerUseCase,
+	brandUC brand.BrandUseCase,
 	productUC product.ProductUseCase,
 	sessUC session.SessUseCase,
 ) *orderHandlersHTTP {
-	return &orderHandlersHTTP{group: group, logger: logger, cfg: cfg, mw: mw, v: v, orderUC: orderUC, userUC: userUC, sellerUC: sellerUC, productUC: productUC, sessUC: sessUC}
+	return &orderHandlersHTTP{group: group, logger: logger, cfg: cfg, mw: mw, v: v, orderUC: orderUC, userUC: userUC, brandUC: brandUC, productUC: productUC, sessUC: sessUC}
 }
 
 // Create
@@ -108,13 +108,13 @@ func (h *orderHandlersHTTP) Create() echo.HandlerFunc {
 			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
 		}
 
-		seller, err := h.sellerUC.CachedFindById(ctx, product.SellerID)
+		brand, err := h.brandUC.CachedFindById(ctx, product.BrandID)
 		if err != nil {
-			h.logger.Errorf("sellerUC.CachedFindById: %v", err)
+			h.logger.Errorf("brandUC.CachedFindById: %v", err)
 			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
 		}
 
-		order, err := h.registerReqToOrderModel(createDto, user, seller, product)
+		order, err := h.registerReqToOrderModel(createDto, user, brand, product)
 		if err != nil {
 			h.logger.Errorf("orderHandlersHTTP.registerReqToOrderModel: %v", err)
 			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
@@ -154,8 +154,8 @@ func (h *orderHandlersHTTP) FindAll() echo.HandlerFunc {
 		}
 		if role == "" {
 			userUUID, _ := uuid.Parse(userID)
-			if res, err := h.orderUC.FindAllBySellerId(ctx, userUUID, pq); err != nil {
-				h.logger.Errorf("orderUC.FindAllBySellerId: %v", err)
+			if res, err := h.orderUC.FindAllByBrandId(ctx, userUUID, pq); err != nil {
+				h.logger.Errorf("orderUC.FindAllByBrandId: %v", err)
 				return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
 			} else {
 				orders = res
@@ -220,7 +220,7 @@ func (h *orderHandlersHTTP) FindById() echo.HandlerFunc {
 // AcceptById
 // @Tags Orders
 // @Summary Accept order
-// @Description Seller accept order
+// @Description Brand accept order
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
@@ -257,7 +257,7 @@ func (h *orderHandlersHTTP) AcceptById() echo.HandlerFunc {
 			return httpErrors.NewForbiddenError(c, nil, h.cfg.Http.DebugErrorsResponse)
 		}
 
-		if userID != order.SellerID.String() {
+		if userID != order.BrandID.String() {
 			return httpErrors.NewForbiddenError(c, nil, h.cfg.Http.DebugErrorsResponse)
 		}
 
@@ -300,28 +300,28 @@ func (h *orderHandlersHTTP) getSessionIDFromCtx(c echo.Context) (sessionID strin
 	if role != "" {
 		userID, _ = claims["user_id"].(string)
 	} else {
-		userID, _ = claims["seller_id"].(string)
+		userID, _ = claims["brand_id"].(string)
 	}
 	return sessionID, userID, role, nil
 }
 
-func (h *orderHandlersHTTP) registerReqToOrderModel(r *dto.OrderCreateRequestDto, user *models.User, seller *models.Seller, product *models.Product) (*models.Order, error) {
+func (h *orderHandlersHTTP) registerReqToOrderModel(r *dto.OrderCreateRequestDto, user *models.User, brand *models.Brand, product *models.Product) (*models.Order, error) {
 	orderCandidate := &models.Order{
-		UserID:   user.UserID,
-		SellerID: seller.SellerID,
+		UserID:  user.UserID,
+		BrandID: brand.BrandID,
 		Item: models.OrderItem{
 			ProductID:   product.ProductID,
 			Name:        product.Name,
 			Description: product.Description,
 			Price:       product.Price,
-			SellerID:    product.SellerID,
+			BrandID:     product.BrandID,
 			CreatedAt:   product.CreatedAt,
 			UpdatedAt:   product.UpdatedAt,
 		},
 		Quantity:                   r.Quantity,
 		TotalPrice:                 float64(r.Quantity) * product.Price,
 		Status:                     models.OrderStatusPending,
-		DeliverySourceAddress:      seller.PickupAddress,
+		DeliverySourceAddress:      brand.PickupAddress,
 		DeliveryDestinationAddress: user.DeliveryAddress,
 	}
 

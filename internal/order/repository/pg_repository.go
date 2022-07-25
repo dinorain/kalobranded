@@ -32,7 +32,7 @@ func (r *OrderRepository) Create(ctx context.Context, order *models.Order) (*mod
 		ctx,
 		createOrderQuery,
 		order.UserID,
-		order.SellerID,
+		order.BrandID,
 		order.Item,
 		order.Quantity,
 		order.TotalPrice,
@@ -53,7 +53,7 @@ func (r *OrderRepository) UpdateById(ctx context.Context, order *models.Order) (
 		updateByIdQuery,
 		order.OrderID,
 		order.UserID,
-		order.SellerID,
+		order.BrandID,
 		order.Item,
 		order.Quantity,
 		order.TotalPrice,
@@ -92,21 +92,21 @@ func (r *OrderRepository) FindAllByUserId(ctx context.Context, userID uuid.UUID,
 	return orders, nil
 }
 
-// FindAllBySellerId Find orders by seller uuid
-func (r *OrderRepository) FindAllBySellerId(ctx context.Context, sellerID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
+// FindAllByBrandId Find orders by brand uuid
+func (r *OrderRepository) FindAllByBrandId(ctx context.Context, brandID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
 	var orders []models.Order
-	if err := r.db.SelectContext(ctx, &orders, findAllBySellerIdQuery, sellerID, pagination.GetLimit(), pagination.GetOffset()); err != nil {
-		return nil, errors.Wrap(err, "OrderPGRepository.FindAllBySellerId.SelectContext")
+	if err := r.db.SelectContext(ctx, &orders, findAllByBrandIdQuery, brandID, pagination.GetLimit(), pagination.GetOffset()); err != nil {
+		return nil, errors.Wrap(err, "OrderPGRepository.FindAllByBrandId.SelectContext")
 	}
 
 	return orders, nil
 }
 
-// FindAllByUserIdSellerId Find orders by user uuid and seller uuid
-func (r *OrderRepository) FindAllByUserIdSellerId(ctx context.Context, userID uuid.UUID, sellerID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
+// FindAllByUserIdBrandId Find orders by user uuid and brand uuid
+func (r *OrderRepository) FindAllByUserIdBrandId(ctx context.Context, userID uuid.UUID, brandID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
 	var orders []models.Order
-	if err := r.db.SelectContext(ctx, &orders, findAllByUserIdSellerIDQuery, userID, sellerID, pagination.GetLimit(), pagination.GetOffset()); err != nil {
-		return nil, errors.Wrap(err, "OrderPGRepository.FindAllByUserIdSellerId.SelectContext")
+	if err := r.db.SelectContext(ctx, &orders, findAllByUserIdBrandIDQuery, userID, brandID, pagination.GetLimit(), pagination.GetOffset()); err != nil {
+		return nil, errors.Wrap(err, "OrderPGRepository.FindAllByUserIdBrandId.SelectContext")
 	}
 
 	return orders, nil

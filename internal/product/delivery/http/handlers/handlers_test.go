@@ -54,12 +54,12 @@ func TestProductsHandler_Create(t *testing.T) {
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(reqDto)
 
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	sessUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["session_id"] = sessUUID.String()
-	claims["seller_id"] = sellerUUID.String()
+	claims["brand_id"] = brandUUID.String()
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	validToken, _ := token.SignedString([]byte("secret"))
 
@@ -81,8 +81,8 @@ func TestProductsHandler_Create(t *testing.T) {
 		SigningKey: []byte("secret"),
 	})(handler)
 
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: sellerUUID, SessionID: sessUUID.String()}, nil)
-	productUC.EXPECT().Create(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{SellerID: sellerUUID}, nil)
+	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
+	productUC.EXPECT().Create(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{BrandID: brandUUID}, nil)
 	require.NoError(t, h(ctx))
 	require.Equal(t, http.StatusCreated, res.Code)
 	require.Equal(t, buf.String(), res.Body.String())
@@ -106,7 +106,7 @@ func TestProductsHandler_FindAll(t *testing.T) {
 	cfg := &config.Config{Session: config.Session{Expire: 1234}}
 	handlers := NewProductHandlersHTTP(e.Group("product"), appLogger, cfg, mw, v, productUC, sessUC)
 
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 
 	var products []models.Product
 	var oneOnly []models.Product
@@ -116,7 +116,7 @@ func TestProductsHandler_FindAll(t *testing.T) {
 		Name:        "Name",
 		Description: "FirstName",
 		Price:       10000.00,
-		SellerID:    sellerUUID,
+		BrandID:    brandUUID,
 	}
 	oneOnly = append(oneOnly, m)
 	products = append(products, m, m)
@@ -125,14 +125,14 @@ func TestProductsHandler_FindAll(t *testing.T) {
 	claims := token.Claims.(jwt.MapClaims)
 	sessUUID := uuid.New()
 	claims["session_id"] = sessUUID.String()
-	claims["seller_id"] = sellerUUID.String()
+	claims["brand_id"] = brandUUID.String()
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	validToken, _ := token.SignedString([]byte("secret"))
 
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: sellerUUID, SessionID: sessUUID.String()}, nil)
-	productUC.EXPECT().FindAllBySellerId(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(oneOnly, nil)
+	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
+	productUC.EXPECT().FindAllByBrandId(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(oneOnly, nil)
 
-	t.Run("Filtered view when accessed by seller", func(t *testing.T) {
+	t.Run("Filtered view when accessed by brand", func(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, "/product", nil)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -153,7 +153,7 @@ func TestProductsHandler_FindAll(t *testing.T) {
 	t.Run("All products view when accessed by user", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["user_id"] = sellerUUID.String()
+		claims["user_id"] = brandUUID.String()
 		claims["role"] = models.UserRoleUser
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
@@ -170,7 +170,7 @@ func TestProductsHandler_FindAll(t *testing.T) {
 			SigningKey: []byte("secret"),
 		})(handler)
 
-		sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: sellerUUID, SessionID: sessUUID.String()}, nil)
+		sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
 		productUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(products, nil)
 
 		require.NoError(t, h(ctx))
@@ -238,20 +238,20 @@ func TestProductsHandler_UpdateById(t *testing.T) {
 		Description: &change,
 	}
 
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	sessUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: sellerUUID, SessionID: sessUUID.String()}, nil)
-	productUC.EXPECT().FindById(gomock.Any(), productUUID).AnyTimes().Return(&models.Product{SellerID: sellerUUID}, nil)
-	productUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{SellerID: sellerUUID}, nil)
+	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
+	productUC.EXPECT().FindById(gomock.Any(), productUUID).AnyTimes().Return(&models.Product{BrandID: brandUUID}, nil)
+	productUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{BrandID: brandUUID}, nil)
 
-	t.Run("Success update by seller", func(t *testing.T) {
+	t.Run("Success update by brand", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["seller_id"] = sellerUUID.String()
+		claims["brand_id"] = brandUUID.String()
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
 
@@ -278,10 +278,10 @@ func TestProductsHandler_UpdateById(t *testing.T) {
 		require.Equal(t, http.StatusOK, res.Code)
 	})
 
-	t.Run("Forbidden update by other seller", func(t *testing.T) {
+	t.Run("Forbidden update by other brand", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["seller_id"] = sessUUID.String()
+		claims["brand_id"] = sessUUID.String()
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
 
@@ -327,19 +327,19 @@ func TestProductsHandler_DeleteById(t *testing.T) {
 	v := validator.New()
 	handlers := NewProductHandlersHTTP(e.Group("product"), appLogger, cfg, mw, v, productUC, sessUC)
 
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	sessUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
-	productUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{SellerID: sellerUUID}, nil)
+	productUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{BrandID: brandUUID}, nil)
 	productUC.EXPECT().DeleteById(gomock.Any(), productUUID).AnyTimes().Return(nil)
 
-	t.Run("Success update by seller", func(t *testing.T) {
+	t.Run("Success update by brand", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["seller_id"] = sellerUUID.String()
+		claims["brand_id"] = brandUUID.String()
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
 
@@ -363,10 +363,10 @@ func TestProductsHandler_DeleteById(t *testing.T) {
 		require.Equal(t, http.StatusOK, res.Code)
 	})
 
-	t.Run("Forbidden update by other seller", func(t *testing.T) {
+	t.Run("Forbidden update by other brand", func(t *testing.T) {
 
 		claims["session_id"] = sessUUID.String()
-		claims["seller_id"] = sessUUID.String()
+		claims["brand_id"] = sessUUID.String()
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 		validToken, _ := token.SignedString([]byte("secret"))
 

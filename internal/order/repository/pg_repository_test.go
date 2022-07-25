@@ -26,21 +26,21 @@ func TestOrderRepository_Create(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -52,7 +52,7 @@ func TestOrderRepository_Create(t *testing.T) {
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -65,7 +65,7 @@ func TestOrderRepository_Create(t *testing.T) {
 
 	mock.ExpectQuery(createOrderQuery).WithArgs(
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -91,21 +91,21 @@ func TestOrderRepository_FindAll(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -117,7 +117,7 @@ func TestOrderRepository_FindAll(t *testing.T) {
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -141,7 +141,7 @@ func TestOrderRepository_FindAll(t *testing.T) {
 	require.Nil(t, foundOrders)
 }
 
-func TestOrderRepository_FindAllBySellerId(t *testing.T) {
+func TestOrderRepository_FindAllByBrandId(t *testing.T) {
 	t.Parallel()
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -153,22 +153,22 @@ func TestOrderRepository_FindAllBySellerId(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
-	otherSellerUUID := uuid.New()
+	brandUUID := uuid.New()
+	otherBrandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: otherSellerUUID,
+		BrandID: otherBrandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    otherSellerUUID,
+			BrandID:    otherBrandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -180,13 +180,13 @@ func TestOrderRepository_FindAllBySellerId(t *testing.T) {
 	mockOtherOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -198,7 +198,7 @@ func TestOrderRepository_FindAllBySellerId(t *testing.T) {
 	otherRows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOtherOrder.UserID,
-		mockOtherOrder.SellerID,
+		mockOtherOrder.BrandID,
 		mockOtherOrder.Item,
 		mockOtherOrder.Quantity,
 		mockOtherOrder.TotalPrice,
@@ -212,7 +212,7 @@ func TestOrderRepository_FindAllBySellerId(t *testing.T) {
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -224,20 +224,20 @@ func TestOrderRepository_FindAllBySellerId(t *testing.T) {
 	)
 
 	size := 10
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(mockOrder.SellerID, size, 0).WillReturnRows(rows)
-	foundOrders, err := orderPGRepository.FindAllBySellerId(context.Background(), mockOrder.SellerID, utils.NewPaginationQuery(size, 1))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(mockOrder.BrandID, size, 0).WillReturnRows(rows)
+	foundOrders, err := orderPGRepository.FindAllByBrandId(context.Background(), mockOrder.BrandID, utils.NewPaginationQuery(size, 1))
 	require.NoError(t, err)
 	require.NotNil(t, foundOrders)
 	require.Equal(t, len(foundOrders), 1)
 
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(mockOtherOrder.SellerID, size, 0).WillReturnRows(otherRows)
-	foundOrders, err = orderPGRepository.FindAllBySellerId(context.Background(), mockOtherOrder.SellerID, utils.NewPaginationQuery(size, 1))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(mockOtherOrder.BrandID, size, 0).WillReturnRows(otherRows)
+	foundOrders, err = orderPGRepository.FindAllByBrandId(context.Background(), mockOtherOrder.BrandID, utils.NewPaginationQuery(size, 1))
 	require.NoError(t, err)
 	require.NotNil(t, foundOrders)
 	require.Equal(t, len(foundOrders), 1)
 
-	mock.ExpectQuery(findAllBySellerIdQuery).WithArgs(mockOtherOrder.SellerID, size, 10).WillReturnRows(otherRows)
-	foundOrders, err = orderPGRepository.FindAllBySellerId(context.Background(), mockOtherOrder.SellerID, utils.NewPaginationQuery(size, 2))
+	mock.ExpectQuery(findAllByBrandIdQuery).WithArgs(mockOtherOrder.BrandID, size, 10).WillReturnRows(otherRows)
+	foundOrders, err = orderPGRepository.FindAllByBrandId(context.Background(), mockOtherOrder.BrandID, utils.NewPaginationQuery(size, 2))
 	require.NoError(t, err)
 	require.Nil(t, foundOrders)
 }
@@ -254,22 +254,22 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	otherUserUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   otherUserUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -281,13 +281,13 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 	mockOtherOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -299,7 +299,7 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 	otherRows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOtherOrder.UserID,
-		mockOtherOrder.SellerID,
+		mockOtherOrder.BrandID,
 		mockOtherOrder.Item,
 		mockOtherOrder.Quantity,
 		mockOtherOrder.TotalPrice,
@@ -313,7 +313,7 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -343,7 +343,7 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 	require.Nil(t, foundOrders)
 }
 
-func TestOrderRepository_FindAllByUserIdSellerId(t *testing.T) {
+func TestOrderRepository_FindAllByUserIdBrandId(t *testing.T) {
 	t.Parallel()
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
@@ -355,22 +355,22 @@ func TestOrderRepository_FindAllByUserIdSellerId(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	otherUserUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   otherUserUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -382,13 +382,13 @@ func TestOrderRepository_FindAllByUserIdSellerId(t *testing.T) {
 	mockOtherOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -400,7 +400,7 @@ func TestOrderRepository_FindAllByUserIdSellerId(t *testing.T) {
 	otherRows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOtherOrder.UserID,
-		mockOtherOrder.SellerID,
+		mockOtherOrder.BrandID,
 		mockOtherOrder.Item,
 		mockOtherOrder.Quantity,
 		mockOtherOrder.TotalPrice,
@@ -414,7 +414,7 @@ func TestOrderRepository_FindAllByUserIdSellerId(t *testing.T) {
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -426,20 +426,20 @@ func TestOrderRepository_FindAllByUserIdSellerId(t *testing.T) {
 	)
 
 	size := 10
-	mock.ExpectQuery(findAllByUserIdSellerIDQuery).WithArgs(mockOrder.UserID, mockOrder.SellerID, size, 0).WillReturnRows(rows)
-	foundOrders, err := orderPGRepository.FindAllByUserIdSellerId(context.Background(), mockOrder.UserID, mockOrder.SellerID, utils.NewPaginationQuery(size, 1))
+	mock.ExpectQuery(findAllByUserIdBrandIDQuery).WithArgs(mockOrder.UserID, mockOrder.BrandID, size, 0).WillReturnRows(rows)
+	foundOrders, err := orderPGRepository.FindAllByUserIdBrandId(context.Background(), mockOrder.UserID, mockOrder.BrandID, utils.NewPaginationQuery(size, 1))
 	require.NoError(t, err)
 	require.NotNil(t, foundOrders)
 	require.Equal(t, len(foundOrders), 1)
 
-	mock.ExpectQuery(findAllByUserIdSellerIDQuery).WithArgs(mockOtherOrder.UserID, mockOtherOrder.SellerID, size, 0).WillReturnRows(otherRows)
-	foundOrders, err = orderPGRepository.FindAllByUserIdSellerId(context.Background(), mockOtherOrder.UserID, mockOtherOrder.SellerID, utils.NewPaginationQuery(size, 1))
+	mock.ExpectQuery(findAllByUserIdBrandIDQuery).WithArgs(mockOtherOrder.UserID, mockOtherOrder.BrandID, size, 0).WillReturnRows(otherRows)
+	foundOrders, err = orderPGRepository.FindAllByUserIdBrandId(context.Background(), mockOtherOrder.UserID, mockOtherOrder.BrandID, utils.NewPaginationQuery(size, 1))
 	require.NoError(t, err)
 	require.NotNil(t, foundOrders)
 	require.Equal(t, len(foundOrders), 1)
 
-	mock.ExpectQuery(findAllByUserIdSellerIDQuery).WithArgs(mockOtherOrder.UserID, mockOtherOrder.SellerID, size, 10).WillReturnRows(otherRows)
-	foundOrders, err = orderPGRepository.FindAllByUserIdSellerId(context.Background(), mockOtherOrder.UserID, mockOtherOrder.SellerID, utils.NewPaginationQuery(size, 2))
+	mock.ExpectQuery(findAllByUserIdBrandIDQuery).WithArgs(mockOtherOrder.UserID, mockOtherOrder.BrandID, size, 10).WillReturnRows(otherRows)
+	foundOrders, err = orderPGRepository.FindAllByUserIdBrandId(context.Background(), mockOtherOrder.UserID, mockOtherOrder.BrandID, utils.NewPaginationQuery(size, 2))
 	require.NoError(t, err)
 	require.Nil(t, foundOrders)
 }
@@ -456,21 +456,21 @@ func TestOrderRepository_FindById(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -482,7 +482,7 @@ func TestOrderRepository_FindById(t *testing.T) {
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -513,21 +513,21 @@ func TestOrderRepository_UpdateById(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -539,7 +539,7 @@ func TestOrderRepository_UpdateById(t *testing.T) {
 	_ = sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -554,7 +554,7 @@ func TestOrderRepository_UpdateById(t *testing.T) {
 	mock.ExpectExec(updateByIdQuery).WithArgs(
 		mockOrder.OrderID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
@@ -582,21 +582,21 @@ func TestOrderRepository_DeleteById(t *testing.T) {
 
 	orderPGRepository := NewOrderPGRepository(sqlxDB)
 
-	columns := []string{"order_id", "user_id", "seller_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
+	columns := []string{"order_id", "user_id", "brand_id", "item", "quantity", "total_price", "status", "delivery_source_address", "delivery_destination_address", "created_at", "updated_at"}
 	orderUUID := uuid.New()
 	userUUID := uuid.New()
-	sellerUUID := uuid.New()
+	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
 		OrderID:  orderUUID,
 		UserID:   userUUID,
-		SellerID: sellerUUID,
+		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			SellerID:    sellerUUID,
+			BrandID:    brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -608,7 +608,7 @@ func TestOrderRepository_DeleteById(t *testing.T) {
 	_ = sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
-		mockOrder.SellerID,
+		mockOrder.BrandID,
 		mockOrder.Item,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,

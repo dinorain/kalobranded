@@ -20,15 +20,12 @@ CREATE TABLE users
     updated_at TIMESTAMP WITH TIME ZONE          DEFAULT CURRENT_TIMESTAMP
 );
 
-DROP TABLE IF EXISTS sellers CASCADE;
-CREATE TABLE sellers
+DROP TABLE IF EXISTS brands CASCADE;
+CREATE TABLE brands
 (
-    seller_id  UUID PRIMARY KEY                  DEFAULT uuid_generate_v4(),
-    first_name VARCHAR(32)              NOT NULL CHECK ( first_name <> '' ),
-    last_name  VARCHAR(32)              NOT NULL CHECK ( last_name <> '' ),
-    email      VARCHAR(64) UNIQUE       NOT NULL CHECK ( email <> '' ),
-    avatar     VARCHAR(250),
-    password   VARCHAR(250)             NOT NULL CHECK ( octet_length(password) <> 0 ),
+    brand_id  UUID PRIMARY KEY        DEFAULT uuid_generate_v4(),
+    brand_name VARCHAR(32)            NOT NULL CHECK ( first_name <> '' ),
+    logo     VARCHAR(250),
     pickup_address      VARCHAR(250)  NOT NULL CHECK ( pickup_address <> '' ),
 
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -42,7 +39,7 @@ CREATE TABLE products
     name        VARCHAR(250)  NOT NULL CHECK ( name <> '' ),
     description VARCHAR(5000) NOT NULL CHECK ( description <> '' ),
     price       NUMERIC       NOT NULL,
-    seller_id   UUID REFERENCES sellers (seller_id),
+    brand_id   UUID REFERENCES brands (brand_id),
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -52,7 +49,7 @@ CREATE TABLE orders
 (
     order_id    UUID PRIMARY KEY                  DEFAULT uuid_generate_v4(),
     user_id     UUID REFERENCES users (user_id),
-    seller_id   UUID REFERENCES sellers (seller_id),
+    brand_id   UUID REFERENCES brands (brand_id),
     item        JSONB,
     quantity    NUMERIC       NOT NULL,
     total_price NUMERIC       NOT NULL,

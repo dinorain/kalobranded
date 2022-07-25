@@ -18,7 +18,6 @@ import (
 type MiddlewareManager interface {
 	RequestLoggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc
 	IsLoggedIn() echo.MiddlewareFunc
-	IsSeller(next echo.HandlerFunc) echo.HandlerFunc
 	IsUser(next echo.HandlerFunc) echo.HandlerFunc
 	IsAdmin(next echo.HandlerFunc) echo.HandlerFunc
 }
@@ -59,31 +58,6 @@ func (mw *middlewareManager) IsAdmin(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		if role != models.UserRoleAdmin {
-			return httpErrors.NewForbiddenError(c, nil, mw.cfg.Http.DebugErrorsResponse)
-		}
-
-		return next(c)
-	}
-}
-
-func (mw *middlewareManager) IsSeller(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		user, ok := c.Get("user").(*jwt.Token)
-		if !ok {
-			mw.logger.Warnf("jwt.Token: %+v", c.Get("user"))
-			return errors.New("invalid token header")
-		}
-		claims := user.Claims.(jwt.MapClaims)
-		if !ok {
-			mw.logger.Warnf("jwt.MapClaims: %+v", c.Get("user"))
-			return errors.New("invalid token header")
-		}
-		sellerID, ok := claims["seller_id"].(string)
-		if !ok {
-			mw.logger.Warnf("seller_id: %+v", claims)
-		}
-
-		if sellerID == "" {
 			return httpErrors.NewForbiddenError(c, nil, mw.cfg.Http.DebugErrorsResponse)
 		}
 

@@ -13,7 +13,7 @@ type ProductResponseDto struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       float64   `json:"price"`
-	SellerID    uuid.UUID `json:"seller_id"`
+	BrandID    uuid.UUID `json:"brand_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -24,7 +24,7 @@ func ProductResponseFromModel(user *models.Product) *ProductResponseDto {
 		Name:        user.Name,
 		Description: user.Description,
 		Price:       user.Price,
-		SellerID:    user.SellerID,
+		BrandID:    user.BrandID,
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 	}

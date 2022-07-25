@@ -41,14 +41,14 @@ curl -X POST                                                   \
     http://139.162.55.156:5001/swagger/index.html#/Users/post_user_login
 ```
 
-#### Seller
+#### Brand
 ```sh
 curl -X POST                                                   \
     -d '{
-        	"email": "seller@gmail.com",
-        	"password": "seller"
+        	"email": "brand@gmail.com",
+        	"password": "brand"
         }' \
-    http://139.162.55.156:5001/swagger/index.html#/Sellers/post_user_login
+    http://139.162.55.156:5001/swagger/index.html#/Brands/post_user_login
 ```
 
 #### Buyer

@@ -81,19 +81,19 @@ func (mr *MockOrderPGRepositoryMockRecorder) FindAll(ctx, pagination interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAll", reflect.TypeOf((*MockOrderPGRepository)(nil).FindAll), ctx, pagination)
 }
 
-// FindAllBySellerId mocks base method.
-func (m *MockOrderPGRepository) FindAllBySellerId(ctx context.Context, sellerID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
+// FindAllByBrandId mocks base method.
+func (m *MockOrderPGRepository) FindAllByBrandId(ctx context.Context, brandID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAllBySellerId", ctx, sellerID, pagination)
+	ret := m.ctrl.Call(m, "FindAllByBrandId", ctx, brandID, pagination)
 	ret0, _ := ret[0].([]models.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindAllBySellerId indicates an expected call of FindAllBySellerId.
-func (mr *MockOrderPGRepositoryMockRecorder) FindAllBySellerId(ctx, sellerID, pagination interface{}) *gomock.Call {
+// FindAllByBrandId indicates an expected call of FindAllByBrandId.
+func (mr *MockOrderPGRepositoryMockRecorder) FindAllByBrandId(ctx, brandID, pagination interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllBySellerId", reflect.TypeOf((*MockOrderPGRepository)(nil).FindAllBySellerId), ctx, sellerID, pagination)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByBrandId", reflect.TypeOf((*MockOrderPGRepository)(nil).FindAllByBrandId), ctx, brandID, pagination)
 }
 
 // FindAllByUserId mocks base method.
@@ -111,19 +111,19 @@ func (mr *MockOrderPGRepositoryMockRecorder) FindAllByUserId(ctx, userID, pagina
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByUserId", reflect.TypeOf((*MockOrderPGRepository)(nil).FindAllByUserId), ctx, userID, pagination)
 }
 
-// FindAllByUserIdSellerId mocks base method.
-func (m *MockOrderPGRepository) FindAllByUserIdSellerId(ctx context.Context, userID, sellerID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
+// FindAllByUserIdBrandId mocks base method.
+func (m *MockOrderPGRepository) FindAllByUserIdBrandId(ctx context.Context, userID, brandID uuid.UUID, pagination *utils.Pagination) ([]models.Order, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindAllByUserIdSellerId", ctx, userID, sellerID, pagination)
+	ret := m.ctrl.Call(m, "FindAllByUserIdBrandId", ctx, userID, brandID, pagination)
 	ret0, _ := ret[0].([]models.Order)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// FindAllByUserIdSellerId indicates an expected call of FindAllByUserIdSellerId.
-func (mr *MockOrderPGRepositoryMockRecorder) FindAllByUserIdSellerId(ctx, userID, sellerID, pagination interface{}) *gomock.Call {
+// FindAllByUserIdBrandId indicates an expected call of FindAllByUserIdBrandId.
+func (mr *MockOrderPGRepositoryMockRecorder) FindAllByUserIdBrandId(ctx, userID, brandID, pagination interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByUserIdSellerId", reflect.TypeOf((*MockOrderPGRepository)(nil).FindAllByUserIdSellerId), ctx, userID, sellerID, pagination)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByUserIdBrandId", reflect.TypeOf((*MockOrderPGRepository)(nil).FindAllByUserIdBrandId), ctx, userID, brandID, pagination)
 }
 
 // FindById mocks base method.

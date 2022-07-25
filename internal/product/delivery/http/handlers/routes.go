@@ -5,7 +5,7 @@ func (h *productHandlersHTTP) ProductMapRoutes() {
 	h.group.GET("", h.FindAll())
 	h.group.GET("/:id", h.FindById())
 
-	h.group.POST("", h.Create(), h.mw.IsSeller)
-	h.group.PUT("/:id", h.UpdateById(), h.mw.IsSeller)
-	h.group.DELETE("/:id", h.DeleteById(), h.mw.IsSeller)
+	h.group.POST("", h.Create(), h.mw.IsAdmin)
+	h.group.PUT("/:id", h.UpdateById(), h.mw.IsAdmin)
+	h.group.DELETE("/:id", h.DeleteById(), h.mw.IsAdmin)
 }

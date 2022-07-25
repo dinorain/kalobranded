@@ -132,7 +132,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Seller accept order",
+                "description": "Brand accept order",
                 "consumes": [
                     "application/json"
                 ],
@@ -209,7 +209,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Seller create product",
+                "description": "Brand create product",
                 "consumes": [
                     "application/json"
                 ],
@@ -345,14 +345,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/seller": {
+        "/brand": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Admin find all sellers",
+                "description": "Admin find all brands",
                 "consumes": [
                     "application/json"
                 ],
@@ -360,9 +360,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "Find all sellers",
+                "summary": "Find all brands",
                 "parameters": [
                     {
                         "type": "string",
@@ -381,7 +381,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerFindResponseDto"
+                            "$ref": "#/definitions/dto.BrandFindResponseDto"
                         }
                     }
                 }
@@ -392,7 +392,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Admin create seller",
+                "description": "Admin create brand",
                 "consumes": [
                     "application/json"
                 ],
@@ -400,9 +400,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "To register seller",
+                "summary": "To register brand",
                 "parameters": [
                     {
                         "description": "Payload",
@@ -410,7 +410,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerRegisterRequestDto"
+                            "$ref": "#/definitions/dto.BrandRegisterRequestDto"
                         }
                     }
                 ],
@@ -418,15 +418,15 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerRegisterResponseDto"
+                            "$ref": "#/definitions/dto.BrandRegisterResponseDto"
                         }
                     }
                 }
             }
         },
-        "/seller/login": {
+        "/brand/login": {
             "post": {
-                "description": "Seller login with email and password",
+                "description": "Brand login with email and password",
                 "consumes": [
                     "application/json"
                 ],
@@ -434,9 +434,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "Seller login",
+                "summary": "Brand login",
                 "parameters": [
                     {
                         "description": "Payload",
@@ -444,7 +444,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerLoginRequestDto"
+                            "$ref": "#/definitions/dto.BrandLoginRequestDto"
                         }
                     }
                 ],
@@ -452,13 +452,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerLoginResponseDto"
+                            "$ref": "#/definitions/dto.BrandLoginResponseDto"
                         }
                     }
                 }
             }
         },
-        "/seller/logout": {
+        "/brand/logout": {
             "post": {
                 "security": [
                     {
@@ -473,9 +473,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "Seller logout",
+                "summary": "Brand logout",
                 "responses": {
                     "200": {
                         "description": "OK"
@@ -483,14 +483,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/seller/me": {
+        "/brand/me": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get session id from token, find seller by uuid and returns it",
+                "description": "Get session id from token, find brand by uuid and returns it",
                 "consumes": [
                     "application/json"
                 ],
@@ -498,20 +498,20 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
                 "summary": "Find me",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerResponseDto"
+                            "$ref": "#/definitions/dto.BrandResponseDto"
                         }
                     }
                 }
             }
         },
-        "/seller/refresh": {
+        "/brand/refresh": {
             "post": {
                 "description": "Refresh access token",
                 "consumes": [
@@ -521,7 +521,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
                 "summary": "Refresh access token",
                 "parameters": [
@@ -531,7 +531,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerRefreshTokenDto"
+                            "$ref": "#/definitions/dto.BrandRefreshTokenDto"
                         }
                     }
                 ],
@@ -539,20 +539,20 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerRefreshTokenResponseDto"
+                            "$ref": "#/definitions/dto.BrandRefreshTokenResponseDto"
                         }
                     }
                 }
             }
         },
-        "/seller/{id}": {
+        "/brand/{id}": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Find existing seller by id",
+                "description": "Find existing brand by id",
                 "consumes": [
                     "application/json"
                 ],
@@ -560,14 +560,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "Find seller",
+                "summary": "Find brand",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerResponseDto"
+                            "$ref": "#/definitions/dto.BrandResponseDto"
                         }
                     }
                 }
@@ -578,7 +578,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Update existing seller",
+                "description": "Update existing brand",
                 "consumes": [
                     "application/json"
                 ],
@@ -586,13 +586,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "Update seller",
+                "summary": "Update brand",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Seller ID",
+                        "description": "Brand ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -603,7 +603,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerUpdateRequestDto"
+                            "$ref": "#/definitions/dto.BrandUpdateRequestDto"
                         }
                     }
                 ],
@@ -611,7 +611,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.SellerResponseDto"
+                            "$ref": "#/definitions/dto.BrandResponseDto"
                         }
                     }
                 }
@@ -622,7 +622,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Delete existing seller, admin only",
+                "description": "Delete existing brand, admin only",
                 "consumes": [
                     "application/json"
                 ],
@@ -630,13 +630,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Sellers"
+                    "Brands"
                 ],
-                "summary": "Delete seller",
+                "summary": "Delete brand",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Seller ID",
+                        "description": "Brand ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1011,7 +1011,7 @@ const docTemplate = `{
                 "quantity": {
                     "type": "integer"
                 },
-                "seller_id": {
+                "brand_id": {
                     "type": "string"
                 },
                 "status": {
@@ -1087,7 +1087,7 @@ const docTemplate = `{
                 "product_id": {
                     "type": "string"
                 },
-                "seller_id": {
+                "brand_id": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -1111,7 +1111,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerFindResponseDto": {
+        "dto.BrandFindResponseDto": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -1120,7 +1120,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerLoginRequestDto": {
+        "dto.BrandLoginRequestDto": {
             "type": "object",
             "required": [
                 "email",
@@ -1136,7 +1136,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerLoginResponseDto": {
+        "dto.BrandLoginResponseDto": {
             "type": "object",
             "required": [
                 "tokens",
@@ -1144,14 +1144,14 @@ const docTemplate = `{
             ],
             "properties": {
                 "tokens": {
-                    "$ref": "#/definitions/dto.SellerRefreshTokenResponseDto"
+                    "$ref": "#/definitions/dto.BrandRefreshTokenResponseDto"
                 },
                 "user_id": {
                     "type": "string"
                 }
             }
         },
-        "dto.SellerRefreshTokenDto": {
+        "dto.BrandRefreshTokenDto": {
             "type": "object",
             "required": [
                 "refresh_token"
@@ -1162,7 +1162,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerRefreshTokenResponseDto": {
+        "dto.BrandRefreshTokenResponseDto": {
             "type": "object",
             "required": [
                 "access_token",
@@ -1177,7 +1177,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerRegisterRequestDto": {
+        "dto.BrandRegisterRequestDto": {
             "type": "object",
             "required": [
                 "email",
@@ -1207,7 +1207,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerRegisterResponseDto": {
+        "dto.BrandRegisterResponseDto": {
             "type": "object",
             "required": [
                 "user_id"
@@ -1218,7 +1218,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerResponseDto": {
+        "dto.BrandResponseDto": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -1239,7 +1239,7 @@ const docTemplate = `{
                 "pickup_address": {
                     "type": "string"
                 },
-                "seller_id": {
+                "brand_id": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -1247,7 +1247,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.SellerUpdateRequestDto": {
+        "dto.BrandUpdateRequestDto": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -1452,7 +1452,7 @@ const docTemplate = `{
                 "product_id": {
                     "type": "string"
                 },
-                "seller_id": {
+                "brand_id": {
                     "type": "string"
                 },
                 "updated_at": {
