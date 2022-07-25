@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/seller/mock"
-	"github.com/dinorain/checkoutaja/pkg/logger"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/seller/mock"
+	"github.com/dinorain/kalobranded/pkg/logger"
 )
 
 func TestSellerUseCase_Register(t *testing.T) {

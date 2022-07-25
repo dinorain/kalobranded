@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/dinorain/checkoutaja/internal/models"
-	httpErrors "github.com/dinorain/checkoutaja/pkg/http_errors"
+	"github.com/dinorain/kalobranded/internal/models"
+	httpErrors "github.com/dinorain/kalobranded/pkg/http_errors"
 )
 
 type responseWriterWrapper struct {

@@ -4,12 +4,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/server"
-	"github.com/dinorain/checkoutaja/pkg/logger"
-	"github.com/dinorain/checkoutaja/pkg/postgres"
-	"github.com/dinorain/checkoutaja/pkg/redis"
-	"github.com/dinorain/checkoutaja/pkg/utils"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/server"
+	"github.com/dinorain/kalobranded/pkg/logger"
+	"github.com/dinorain/kalobranded/pkg/postgres"
+	"github.com/dinorain/kalobranded/pkg/redis"
+	"github.com/dinorain/kalobranded/pkg/utils"
 )
 
 // @contact.name Dustin Jourdan
@@ -21,7 +21,7 @@ import (
 // @name                        Authorization
 
 func main() {
-	log.Println("Starting checkoutaja service")
+	log.Println("Starting kalobranded service")
 
 	configPath := utils.GetConfigPath(os.Getenv("CONFIG"))
 	cfg, err := config.GetConfig(configPath)

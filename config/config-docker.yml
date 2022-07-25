@@ -37,7 +37,7 @@ postgres:
   PostgresqlPort: 5432
   PostgresqlUser: postgres
   PostgresqlPassword: postgres
-  PostgresqlDbname: checkoutaja_db
+  PostgresqlDbname: kalobranded_db
   PostgresqlSslmode: false
   PgDriver: postgres
 

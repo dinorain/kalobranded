@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/dinorain/checkoutaja/internal/models"
+	"github.com/dinorain/kalobranded/internal/models"
 )
 
 type ProductResponseDto struct {

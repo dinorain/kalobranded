@@ -7,11 +7,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/order"
-	"github.com/dinorain/checkoutaja/pkg/logger"
-	"github.com/dinorain/checkoutaja/pkg/utils"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/order"
+	"github.com/dinorain/kalobranded/pkg/logger"
+	"github.com/dinorain/kalobranded/pkg/utils"
 )
 
 const (

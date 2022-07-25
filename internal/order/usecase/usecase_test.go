@@ -9,10 +9,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/order/mock"
-	"github.com/dinorain/checkoutaja/pkg/logger"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/order/mock"
+	"github.com/dinorain/kalobranded/pkg/logger"
 )
 
 func TestOrderUseCase_Create(t *testing.T) {

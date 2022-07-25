@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/order"
-	"github.com/dinorain/checkoutaja/pkg/logger"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/order"
+	"github.com/dinorain/kalobranded/pkg/logger"
 )
 
 // Order redis repository

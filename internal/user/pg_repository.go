@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/pkg/utils"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/pkg/utils"
 )
 
 // User pg repository

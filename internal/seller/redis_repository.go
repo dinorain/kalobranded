@@ -4,7 +4,7 @@ package seller
 import (
 	"context"
 
-	"github.com/dinorain/checkoutaja/internal/models"
+	"github.com/dinorain/kalobranded/internal/models"
 )
 
 // Seller Redis repository interface

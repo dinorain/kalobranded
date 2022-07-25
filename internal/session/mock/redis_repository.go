@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/dinorain/checkoutaja/internal/models"
+	models "github.com/dinorain/kalobranded/internal/models"
 	gomock "github.com/golang/mock/gomock"
 )
 

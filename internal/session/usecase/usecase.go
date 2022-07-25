@@ -3,9 +3,9 @@ package usecase
 import (
 	"context"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/session"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/session"
 )
 
 // Session use case

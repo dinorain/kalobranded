@@ -4,7 +4,7 @@ package session
 import (
 	"context"
 
-	"github.com/dinorain/checkoutaja/internal/models"
+	"github.com/dinorain/kalobranded/internal/models"
 )
 
 // Session UseCase

@@ -8,9 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/seller"
-	"github.com/dinorain/checkoutaja/pkg/utils"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/seller"
+	"github.com/dinorain/kalobranded/pkg/utils"
 )
 
 // Seller repository

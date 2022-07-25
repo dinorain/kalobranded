@@ -8,9 +8,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/order"
-	"github.com/dinorain/checkoutaja/pkg/utils"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/order"
+	"github.com/dinorain/kalobranded/pkg/utils"
 )
 
 // Order repository

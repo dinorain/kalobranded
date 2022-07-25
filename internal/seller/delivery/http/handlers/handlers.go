@@ -12,16 +12,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/middlewares"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/seller"
-	"github.com/dinorain/checkoutaja/internal/seller/delivery/http/dto"
-	"github.com/dinorain/checkoutaja/internal/session"
-	"github.com/dinorain/checkoutaja/pkg/constants"
-	httpErrors "github.com/dinorain/checkoutaja/pkg/http_errors"
-	"github.com/dinorain/checkoutaja/pkg/logger"
-	"github.com/dinorain/checkoutaja/pkg/utils"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/middlewares"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/seller"
+	"github.com/dinorain/kalobranded/internal/seller/delivery/http/dto"
+	"github.com/dinorain/kalobranded/internal/session"
+	"github.com/dinorain/kalobranded/pkg/constants"
+	httpErrors "github.com/dinorain/kalobranded/pkg/http_errors"
+	"github.com/dinorain/kalobranded/pkg/logger"
+	"github.com/dinorain/kalobranded/pkg/utils"
 )
 
 type sellerHandlersHTTP struct {

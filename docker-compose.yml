@@ -19,20 +19,20 @@ services:
     volumes:
       - ./:/app
     networks:
-      - checkoutaja_network
+      - kalobranded_network
 
   redis:
     image: redis:6.0.9-alpine
-    container_name: checkoutaja_redis
+    container_name: kalobranded_redis
     ports:
       - "6379:6379"
     restart: always
     networks:
-      - checkoutaja_network
+      - kalobranded_network
 
   postgesql:
     image: postgres:13-alpine
-    container_name: checkoutaja_postgesql
+    container_name: kalobranded_postgesql
     expose:
       - "5432"
     ports:
@@ -41,14 +41,14 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=checkoutaja_db
+      - POSTGRES_DB=kalobranded_db
       - POSTGRES_HOST=5432
     command: -p 5432
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     networks:
-      - checkoutaja_network
+      - kalobranded_network
 
 networks:
-  checkoutaja_network:
+  kalobranded_network:
     driver: bridge

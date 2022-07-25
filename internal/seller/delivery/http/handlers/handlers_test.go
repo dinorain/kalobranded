@@ -17,14 +17,14 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/middlewares"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/seller/delivery/http/dto"
-	"github.com/dinorain/checkoutaja/internal/seller/mock"
-	mockSessUC "github.com/dinorain/checkoutaja/internal/session/mock"
-	"github.com/dinorain/checkoutaja/pkg/converter"
-	"github.com/dinorain/checkoutaja/pkg/logger"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/middlewares"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/seller/delivery/http/dto"
+	"github.com/dinorain/kalobranded/internal/seller/mock"
+	mockSessUC "github.com/dinorain/kalobranded/internal/session/mock"
+	"github.com/dinorain/kalobranded/pkg/converter"
+	"github.com/dinorain/kalobranded/pkg/logger"
 )
 
 func TestSellersHandler_Register(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	models "github.com/dinorain/checkoutaja/internal/models"
-	utils "github.com/dinorain/checkoutaja/pkg/utils"
+	models "github.com/dinorain/kalobranded/internal/models"
+	utils "github.com/dinorain/kalobranded/pkg/utils"
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
 )

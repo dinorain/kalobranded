@@ -17,17 +17,17 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/require"
 
-	"github.com/dinorain/checkoutaja/config"
-	"github.com/dinorain/checkoutaja/internal/middlewares"
-	"github.com/dinorain/checkoutaja/internal/models"
-	"github.com/dinorain/checkoutaja/internal/order/delivery/http/dto"
-	"github.com/dinorain/checkoutaja/internal/order/mock"
-	mockProductUC "github.com/dinorain/checkoutaja/internal/product/mock"
-	mockSellerUC "github.com/dinorain/checkoutaja/internal/seller/mock"
-	mockSessUC "github.com/dinorain/checkoutaja/internal/session/mock"
-	mockUserUC "github.com/dinorain/checkoutaja/internal/user/mock"
-	"github.com/dinorain/checkoutaja/pkg/converter"
-	"github.com/dinorain/checkoutaja/pkg/logger"
+	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/middlewares"
+	"github.com/dinorain/kalobranded/internal/models"
+	"github.com/dinorain/kalobranded/internal/order/delivery/http/dto"
+	"github.com/dinorain/kalobranded/internal/order/mock"
+	mockProductUC "github.com/dinorain/kalobranded/internal/product/mock"
+	mockSellerUC "github.com/dinorain/kalobranded/internal/seller/mock"
+	mockSessUC "github.com/dinorain/kalobranded/internal/session/mock"
+	mockUserUC "github.com/dinorain/kalobranded/internal/user/mock"
+	"github.com/dinorain/kalobranded/pkg/converter"
+	"github.com/dinorain/kalobranded/pkg/logger"
 )
 
 func TestOrdersHandler_Create(t *testing.T) {

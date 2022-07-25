@@ -44,16 +44,16 @@ run-linter:
 # Go migrate postgresql
 
 force:
-	migrate -database postgres://postgres:postgres@localhost:5432/checkoutaja_db?sslmode=disable -path migrations force 1
+	migrate -database postgres://postgres:postgres@localhost:5432/kalobranded_db?sslmode=disable -path migrations force 1
 
 version:
-	migrate -database postgres://postgres:postgres@localhost:5432/checkoutaja_db?sslmode=disable -path migrations version
+	migrate -database postgres://postgres:postgres@localhost:5432/kalobranded_db?sslmode=disable -path migrations version
 
 migrate_up:
-	migrate -database postgres://postgres:postgres@localhost:5432/checkoutaja_db?sslmode=disable -path migrations up 1
+	migrate -database postgres://postgres:postgres@localhost:5432/kalobranded_db?sslmode=disable -path migrations up 1
 
 migrate_down:
-	migrate -database postgres://postgres:postgres@localhost:5432/checkoutaja_db?sslmode=disable -path migrations down 1
+	migrate -database postgres://postgres:postgres@localhost:5432/kalobranded_db?sslmode=disable -path migrations down 1
 
 
 # ==============================================================================

@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	"github.com/dinorain/checkoutaja/config"
+	"github.com/dinorain/kalobranded/config"
 )
 
 // Returns new redis client

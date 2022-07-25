@@ -1,4 +1,4 @@
-module github.com/dinorain/checkoutaja
+module github.com/dinorain/kalobranded
 
 go 1.16
 
@@ -14,7 +14,6 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.5.2
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/jmoiron/sqlx v1.3.5
@@ -32,7 +31,6 @@ require (
 	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
 	golang.org/x/tools v0.1.11 // indirect
 	google.golang.org/grpc v1.46.2
-	google.golang.org/protobuf v1.28.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

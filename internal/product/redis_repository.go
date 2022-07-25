@@ -4,7 +4,7 @@ package product
 import (
 	"context"
 
-	"github.com/dinorain/checkoutaja/internal/models"
+	"github.com/dinorain/kalobranded/internal/models"
 )
 
 // Product Redis repository interface
