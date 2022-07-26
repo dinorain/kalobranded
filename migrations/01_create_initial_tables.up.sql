@@ -25,7 +25,7 @@ DROP TABLE IF EXISTS brands CASCADE;
 CREATE TABLE brands
 (
     brand_id    UUID PRIMARY KEY      DEFAULT uuid_generate_v4(),
-    brand_name  VARCHAR(32)           NOT NULL CHECK ( first_name <> '' ),
+    brand_name  VARCHAR(32)           NOT NULL CHECK ( brand_name <> '' ),
     logo        VARCHAR(250),
     pickup_address      VARCHAR(250)  NOT NULL CHECK ( pickup_address <> '' ),
 
