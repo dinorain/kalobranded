@@ -262,6 +262,8 @@ func ParseErrors(err error, debug bool) RestErr {
 		return NewRestError(http.StatusUnauthorized, ErrUnauthorized, err.Error(), debug)
 	case strings.Contains(strings.ToLower(err.Error()), "bcrypt"):
 		return NewRestError(http.StatusBadRequest, ErrBadRequest, err.Error(), debug)
+	case strings.Contains(strings.ToLower(err.Error()), "exists"):
+		return NewRestError(http.StatusBadRequest, ErrBadRequest, err.Error(), debug)
 	case strings.Contains(strings.ToLower(err.Error()), "no documents in result"):
 		return NewRestError(http.StatusNotFound, ErrNotFound, err.Error(), debug)
 	default:
@@ -296,7 +298,7 @@ func ErrorResponse(err error, debug bool) (int, interface{}) {
 // ErrorCtxResponse Error response object and status code
 func ErrorCtxResponse(w http.ResponseWriter, err error, debug bool) error {
 	restError := ParseErrors(err, debug)
-	if b, err := json.Marshal(restError.Status()); err != nil {
+	if b, err := json.Marshal(restError); err != nil {
 		return err
 	} else {
 		w.WriteHeader(restError.Status())

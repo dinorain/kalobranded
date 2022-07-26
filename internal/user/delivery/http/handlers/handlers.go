@@ -252,7 +252,6 @@ func (h *userHandlersHTTP) GetMe(w http.ResponseWriter, r *http.Request) {
 	sessID, _, _, err := h.getSessionIDFromCtx(w, r)
 	if err != nil {
 		h.logger.Errorf("getSessionIDFromCtx: %v", err)
-		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
@@ -294,7 +293,6 @@ func (h *userHandlersHTTP) Logout(w http.ResponseWriter, r *http.Request) {
 	sessID, _, _, err := h.getSessionIDFromCtx(w, r)
 	if err != nil {
 		h.logger.Errorf("getSessionIDFromCtx: %v", err)
-		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 

@@ -84,7 +84,6 @@ func (h *orderHandlersHTTP) Create(w http.ResponseWriter, r *http.Request) {
 	sessID, _, _, err := h.getSessionIDFromCtx(w, r)
 	if err != nil {
 		h.logger.Errorf("getSessionIDFromCtx: %v", err)
-		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
@@ -161,7 +160,6 @@ func (h *orderHandlersHTTP) FindAll(w http.ResponseWriter, r *http.Request) {
 	sessID, _, role, err := h.getSessionIDFromCtx(w, r)
 	if err != nil {
 		h.logger.Errorf("getSessionIDFromCtx: %v", err)
-		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 

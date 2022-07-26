@@ -198,12 +198,12 @@ func (h *productHandlersHTTP) FindAllByBrandId(w http.ResponseWriter, r *http.Re
 
 	var products []models.Product
 	id := queryParam.Get(constants.ID)
-	productUUID, err := uuid.Parse(id)
+	brandUUID, err := uuid.Parse(id)
 	if err != nil {
 		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
 	}
-	if res, err := h.productUC.FindAllByBrandId(ctx, productUUID, pq); err != nil {
+	if res, err := h.productUC.FindAllByBrandId(ctx, brandUUID, pq); err != nil {
 		h.logger.Errorf("productUC.FindAllByBrandId: %v", err)
 		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
