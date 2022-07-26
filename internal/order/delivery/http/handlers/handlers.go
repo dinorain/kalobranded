@@ -63,7 +63,7 @@ func NewOrderHandlersHTTP(
 // @Security ApiKeyAuth
 // @Param payload body dto.OrderCreateRequestDto true "Payload"
 // @Success 200 {object} dto.OrderCreateResponseDto
-// @Router /order [post]
+// @Router /order/create [post]
 func (h *orderHandlersHTTP) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

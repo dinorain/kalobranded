@@ -118,7 +118,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/order/create": {
             "post": {
                 "security": [
                     {
@@ -203,7 +205,9 @@
                         }
                     }
                 }
-            },
+            }
+        },
+        "/product/create": {
             "post": {
                 "security": [
                     {

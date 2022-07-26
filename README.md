@@ -27,7 +27,7 @@
 
 ### Swagger:
 
-http://localhost:5001/swagger/
+http://localhost:5001/swagger/ or http://139.162.7.112:5001/swagger/ (test)
 
 ### Test Accounts:
 
@@ -38,7 +38,7 @@ curl -X POST                                                   \
         	"email": "admin@gmail.com",
         	"password": "admin"
         }' \
-    http://139.162.55.156:5001/swagger/index.html#/Users/post_user_login
+    http://139.162.7.112:5001/swagger/index.html#/Users/post_user_login
 ```
 
 #### Buyer
@@ -48,6 +48,6 @@ curl -X POST                                                   \
         	"email": "djourdan555@gmail.com",
         	"password": "hello"
         }' \
-    http://139.162.55.156:5001/swagger/index.html#/Users/post_user_login
+    http://139.162.7.112:5001/swagger/index.html#/Users/post_user_login
 ```
 

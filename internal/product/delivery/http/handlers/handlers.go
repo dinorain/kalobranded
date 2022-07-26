@@ -55,7 +55,7 @@ func NewProductHandlersHTTP(
 // @Security ApiKeyAuth
 // @Param payload body dto.ProductCreateRequestDto true "Payload"
 // @Success 200 {object} dto.ProductCreateResponseDto
-// @Router /product [post]
+// @Router /product/create [post]
 func (h *productHandlersHTTP) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

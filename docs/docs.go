@@ -130,7 +130,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/order/create": {
             "post": {
                 "security": [
                     {
@@ -215,7 +217,9 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/product/create": {
             "post": {
                 "security": [
                     {

@@ -334,6 +334,7 @@ paths:
       summary: Find order by id
       tags:
       - Orders
+  /order/create:
     post:
       consumes:
       - application/json
@@ -387,6 +388,7 @@ paths:
       summary: Find all products by brand
       tags:
       - Products
+  /product/create:
     post:
       consumes:
       - application/json
