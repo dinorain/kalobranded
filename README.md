@@ -1,4 +1,4 @@
-### Checkoutaja: Go REST example for product checkout service
+### Kalobranded: Go REST example for branded product checkout service
 
 #### What have been used:
 * [sqlx](https://github.com/jmoiron/sqlx) - Extensions to database/sql.
@@ -39,16 +39,6 @@ curl -X POST                                                   \
         	"password": "admin"
         }' \
     http://139.162.55.156:5001/swagger/index.html#/Users/post_user_login
-```
-
-#### Brand
-```sh
-curl -X POST                                                   \
-    -d '{
-        	"email": "brand@gmail.com",
-        	"password": "brand"
-        }' \
-    http://139.162.55.156:5001/swagger/index.html#/Brands/post_user_login
 ```
 
 #### Buyer

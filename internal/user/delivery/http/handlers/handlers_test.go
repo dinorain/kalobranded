@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,8 +15,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dinorain/kalobranded/config"
@@ -36,20 +36,21 @@ func TestUsersHandler_Register(t *testing.T) {
 	userUC := mock.NewMockUserUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
 
 	reqDto := &dto.UserRegisterRequestDto{
 		Email:           "email@gmail.com",
 		FirstName:       "FirstName",
 		LastName:        "LastName",
 		Password:        "123456",
-		Role:            "user",
+		Role:            models.UserRoleUser,
 		DeliveryAddress: "DeliveryAddress",
 	}
 
@@ -57,9 +58,8 @@ func TestUsersHandler_Register(t *testing.T) {
 	_ = json.NewEncoder(buf).Encode(reqDto)
 
 	req := httptest.NewRequest(http.MethodPost, "/user", buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
 
 	resDto := &dto.UserRegisterResponseDto{
 		UserID: uuid.Nil,
@@ -68,9 +68,19 @@ func TestUsersHandler_Register(t *testing.T) {
 	buf, _ = converter.AnyToBytesBuffer(resDto)
 
 	userUC.EXPECT().Register(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{}, nil)
-	require.NoError(t, handlers.Register()(ctx))
-	require.Equal(t, http.StatusCreated, res.Code)
-	require.Equal(t, buf.String(), res.Body.String())
+
+	handler := http.HandlerFunc(handlers.Register)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusCreated, w.Code)
+	require.Equal(t, strings.Trim(buf.String(), "\n"), string(data))
 }
 
 func TestUsersHandler_Login(t *testing.T) {
@@ -82,13 +92,14 @@ func TestUsersHandler_Login(t *testing.T) {
 	userUC := mock.NewMockUserUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
 
 	reqDto := &dto.UserLoginRequestDto{
 		Email:    "email@gmail.com",
@@ -99,9 +110,8 @@ func TestUsersHandler_Login(t *testing.T) {
 	_ = json.NewEncoder(&buf).Encode(reqDto)
 
 	req := httptest.NewRequest(http.MethodPost, "/user/login", &buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
 
 	mockUser := &models.User{
 		UserID:          uuid.New(),
@@ -109,15 +119,33 @@ func TestUsersHandler_Login(t *testing.T) {
 		FirstName:       "FirstName",
 		LastName:        "LastName",
 		Password:        "123456",
-		Role:            "user",
+		Role:            models.UserRoleUser,
 		DeliveryAddress: "DeliveryAddress",
 	}
 
 	userUC.EXPECT().Login(gomock.Any(), reqDto.Email, reqDto.Password).AnyTimes().Return(mockUser, nil)
 	sessUC.EXPECT().CreateSession(gomock.Any(), &models.Session{UserID: mockUser.UserID}, cfg.Session.Expire).AnyTimes().Return("s", nil)
 	userUC.EXPECT().GenerateTokenPair(gomock.Any(), gomock.Any()).AnyTimes().Return("rt", "at", nil)
-	require.NoError(t, handlers.Login()(ctx))
-	require.Equal(t, http.StatusCreated, res.Code)
+
+	handler := http.HandlerFunc(handlers.Login)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusOK, w.Code)
+
+	resDto := &dto.UserLoginResponseDto{}
+	err = json.NewDecoder(res.Body).Decode(resDto)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	require.Equal(t, mockUser.UserID.String(), resDto.UserID.String())
 }
 
 func TestUsersHandler_FindAll(t *testing.T) {
@@ -129,18 +157,18 @@ func TestUsersHandler_FindAll(t *testing.T) {
 	userUC := mock.NewMockUserUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
 
 	req := httptest.NewRequest(http.MethodGet, "/user", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
 
 	var users []models.User
 	users = append(users, models.User{
@@ -149,13 +177,28 @@ func TestUsersHandler_FindAll(t *testing.T) {
 		FirstName:       "FirstName",
 		LastName:        "LastName",
 		Password:        "123456",
-		Role:            "user",
+		Role:            models.UserRoleUser,
 		DeliveryAddress: "DeliveryAddress",
 	})
 
 	userUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(users, nil)
-	require.NoError(t, handlers.FindAll()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
+
+	handler := http.HandlerFunc(handlers.FindAll)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusOK, w.Code)
+
+	resDto := &dto.UserFindResponseDto{}
+	_ = json.Unmarshal(data, resDto)
+
+	require.Equal(t, len(users), len(resDto.Data.([]interface{})))
 }
 
 func TestUsersHandler_FindById(t *testing.T) {
@@ -167,143 +210,42 @@ func TestUsersHandler_FindById(t *testing.T) {
 	userUC := mock.NewMockUserUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	appLogger := logger.NewAppLogger(cfg)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
-
-	e := echo.New()
-	v := validator.New()
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
-
-	req := httptest.NewRequest(http.MethodGet, "/user/:id", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	ctx.SetParamNames("id")
-	ctx.SetParamValues("2ceba62a-35f4-444b-a358-4b14834837e1")
-
-	userUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{}, nil)
-	require.NoError(t, handlers.FindById()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
-}
-
-func TestUsersHandler_UpdateById(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userUC := mock.NewMockUserUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
-
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
 	appLogger := logger.NewAppLogger(cfg)
 	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
 
-	change := "changed"
-	reqDto := &dto.UserUpdateRequestDto{
-		FirstName:       &change,
-		LastName:        &change,
-		Password:        &change,
-		DeliveryAddress: &change,
-		Avatar:          &change,
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
+
+	userUUID := uuid.New()
+
+	req := httptest.NewRequest(http.MethodGet, "/user?id="+userUUID.String(), nil)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	userUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
+
+	handler := http.HandlerFunc(handlers.FindById)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusOK, w.Code)
+
+	resDto := &dto.UserResponseDto{}
+	err = json.NewDecoder(res.Body).Decode(resDto)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	buf := &bytes.Buffer{}
-	_ = json.NewEncoder(buf).Encode(reqDto)
-
-	userUUID := uuid.New()
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["session_id"] = uuid.New().String()
-	claims["user_id"] = userUUID.String()
-	claims["role"] = "user"
-	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	validToken, _ := token.SignedString([]byte("secret"))
-
-	req := httptest.NewRequest(http.MethodPost, "/user/:id", buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-
-	t.Run("Forbidden update by other user", func(t *testing.T) {
-		t.Parallel()
-
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
-
-		handler := handlers.UpdateById()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
-
-		ctx.SetParamNames("id")
-		ctx.SetParamValues("2ceba62a-35f4-444b-a358-4b14834837e1")
-
-		userUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
-
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusForbidden, res.Code)
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		t.Parallel()
-
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
-
-		handler := handlers.UpdateById()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
-
-		ctx.SetParamNames("id")
-		ctx.SetParamValues(userUUID.String())
-
-		userUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
-		userUC.EXPECT().FindById(gomock.Any(), userUUID).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
-
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusOK, res.Code)
-	})
-}
-
-func TestUsersHandler_DeleteById(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	userUC := mock.NewMockUserUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
-
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	appLogger := logger.NewAppLogger(cfg)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
-
-	e := echo.New()
-	v := validator.New()
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
-
-	req := httptest.NewRequest(http.MethodDelete, "/user/:id", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	userUUID := uuid.New()
-	ctx.SetParamNames("id")
-	ctx.SetParamValues(userUUID.String())
-
-	userUC.EXPECT().DeleteById(gomock.Any(), userUUID).AnyTimes().Return(nil)
-	require.NoError(t, handlers.DeleteById()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
+	require.Equal(t, userUUID.String(), resDto.UserID.String())
 }
 
 func TestUsersHandler_GetMe(t *testing.T) {
@@ -315,42 +257,52 @@ func TestUsersHandler_GetMe(t *testing.T) {
 	userUC := mock.NewMockUserUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
 	appLogger := logger.NewAppLogger(cfg)
 	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
 
 	userUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["session_id"] = uuid.New().String()
 	claims["user_id"] = userUUID.String()
-	claims["role"] = "user"
+	claims["role"] = models.UserRoleUser
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	validToken, _ := token.SignedString([]byte("secret"))
 
-	req := httptest.NewRequest(http.MethodPost, "/user/logout", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
+	req := httptest.NewRequest(http.MethodGet, "/user/me", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", validToken))
 
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	handler := handlers.GetMe()
-	h := middleware.JWTWithConfig(middleware.JWTConfig{
-		Claims:     claims,
-		SigningKey: []byte("secret"),
-	})(handler)
+	w := httptest.NewRecorder()
 
 	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"].(string)).AnyTimes().Return(&models.Session{}, nil)
-	userUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{}, nil)
+	userUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
 
-	require.NoError(t, h(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
+	handler := http.HandlerFunc(handlers.GetMe)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusOK, w.Code)
+
+	resDto := &dto.UserResponseDto{}
+	err = json.NewDecoder(res.Body).Decode(resDto)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	require.Equal(t, userUUID.String(), resDto.UserID.String())
 }
 
 func TestUsersHandler_Logout(t *testing.T) {
@@ -362,41 +314,43 @@ func TestUsersHandler_Logout(t *testing.T) {
 	userUC := mock.NewMockUserUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
 	appLogger := logger.NewAppLogger(cfg)
 	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
 
 	userUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["session_id"] = uuid.New().String()
 	claims["user_id"] = userUUID.String()
-	claims["role"] = "user"
+	claims["role"] = models.UserRoleUser
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	validToken, _ := token.SignedString([]byte("secret"))
 
-	req := httptest.NewRequest(http.MethodPost, "/user/logout", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
+	req := httptest.NewRequest(http.MethodGet, "/user/logout", nil)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", validToken))
 
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	handler := handlers.Logout()
-	h := middleware.JWTWithConfig(middleware.JWTConfig{
-		Claims:     claims,
-		SigningKey: []byte("secret"),
-	})(handler)
+	w := httptest.NewRecorder()
 
 	sessUC.EXPECT().DeleteById(gomock.Any(), claims["session_id"].(string)).AnyTimes().Return(nil)
 
-	require.NoError(t, h(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
+	handler := http.HandlerFunc(handlers.Logout)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusOK, w.Code)
 }
 
 func TestUsersHandler_RefreshToken(t *testing.T) {
@@ -412,9 +366,10 @@ func TestUsersHandler_RefreshToken(t *testing.T) {
 	appLogger := logger.NewAppLogger(cfg)
 	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
 	v := validator.New()
-	handlers := NewUserHandlersHTTP(e.Group("user"), appLogger, cfg, mw, v, userUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewUserHandlersHTTP(mux, appLogger, cfg, mw, v, userUC, sessUC)
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -430,15 +385,23 @@ func TestUsersHandler_RefreshToken(t *testing.T) {
 	_ = json.NewEncoder(buf).Encode(reqDto)
 
 	req := httptest.NewRequest(http.MethodPost, "/user/refresh", buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req.Header.Set("Content-Type", "application/json")
 
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	w := httptest.NewRecorder()
 
 	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"].(string)).AnyTimes().Return(&models.Session{}, nil)
 	userUC.EXPECT().FindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.User{}, nil)
 	userUC.EXPECT().GenerateTokenPair(gomock.Any(), gomock.Any()).AnyTimes().Return("rt", "at", nil)
 
-	require.NoError(t, handlers.RefreshToken()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
+	handler := http.HandlerFunc(handlers.RefreshToken)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusOK, w.Code)
 }

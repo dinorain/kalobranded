@@ -1,12 +1,12 @@
 package product
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
+)
 
 // Product HTTP Handlers interface
 type ProductHandlers interface {
-	Create() echo.HandlerFunc
-	FindAll() echo.HandlerFunc
-	FindById() echo.HandlerFunc
-	UpdateById() echo.HandlerFunc
-	DeleteById() echo.HandlerFunc
+	Create(w http.ResponseWriter, r *http.Request)
+	FindAll(w http.ResponseWriter, r *http.Request)
+	FindAllByBrandId(w http.ResponseWriter, r *http.Request)
 }

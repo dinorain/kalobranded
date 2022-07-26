@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -32,15 +33,15 @@ func TestOrderRepository_Create(t *testing.T) {
 	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -49,11 +50,13 @@ func TestOrderRepository_Create(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOrder.Item)
+
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -66,7 +69,7 @@ func TestOrderRepository_Create(t *testing.T) {
 	mock.ExpectQuery(createOrderQuery).WithArgs(
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -97,15 +100,15 @@ func TestOrderRepository_FindAll(t *testing.T) {
 	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -114,11 +117,13 @@ func TestOrderRepository_FindAll(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOrder.Item)
+
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -160,15 +165,15 @@ func TestOrderRepository_FindAllByBrandId(t *testing.T) {
 	otherBrandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: otherBrandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    otherBrandUUID,
+			BrandID:     otherBrandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -178,15 +183,15 @@ func TestOrderRepository_FindAllByBrandId(t *testing.T) {
 	}
 
 	mockOtherOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -195,11 +200,13 @@ func TestOrderRepository_FindAllByBrandId(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOtherOrder.Item)
+
 	otherRows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOtherOrder.UserID,
 		mockOtherOrder.BrandID,
-		mockOtherOrder.Item,
+		valueJson,
 		mockOtherOrder.Quantity,
 		mockOtherOrder.TotalPrice,
 		mockOtherOrder.Status,
@@ -209,11 +216,13 @@ func TestOrderRepository_FindAllByBrandId(t *testing.T) {
 		time.Now(),
 	)
 
+	valueJson, _ = json.Marshal(mockOrder.Item)
+
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -261,15 +270,15 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 	otherUserUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   otherUserUUID,
+		OrderID: orderUUID,
+		UserID:  otherUserUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -279,15 +288,15 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 	}
 
 	mockOtherOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -296,11 +305,13 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOtherOrder.Item)
+
 	otherRows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOtherOrder.UserID,
 		mockOtherOrder.BrandID,
-		mockOtherOrder.Item,
+		valueJson,
 		mockOtherOrder.Quantity,
 		mockOtherOrder.TotalPrice,
 		mockOtherOrder.Status,
@@ -310,11 +321,13 @@ func TestOrderRepository_FindAllByUserId(t *testing.T) {
 		time.Now(),
 	)
 
+	valueJson, _ = json.Marshal(mockOrder.Item)
+
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -362,15 +375,15 @@ func TestOrderRepository_FindAllByUserIdBrandId(t *testing.T) {
 	otherUserUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   otherUserUUID,
+		OrderID: orderUUID,
+		UserID:  otherUserUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -380,15 +393,15 @@ func TestOrderRepository_FindAllByUserIdBrandId(t *testing.T) {
 	}
 
 	mockOtherOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -397,11 +410,13 @@ func TestOrderRepository_FindAllByUserIdBrandId(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOtherOrder.Item)
+
 	otherRows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOtherOrder.UserID,
 		mockOtherOrder.BrandID,
-		mockOtherOrder.Item,
+		valueJson,
 		mockOtherOrder.Quantity,
 		mockOtherOrder.TotalPrice,
 		mockOtherOrder.Status,
@@ -411,11 +426,13 @@ func TestOrderRepository_FindAllByUserIdBrandId(t *testing.T) {
 		time.Now(),
 	)
 
+	valueJson, _ = json.Marshal(mockOrder.Item)
+
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -462,15 +479,15 @@ func TestOrderRepository_FindById(t *testing.T) {
 	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -479,11 +496,13 @@ func TestOrderRepository_FindById(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOrder.Item)
+
 	rows := sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -519,15 +538,15 @@ func TestOrderRepository_UpdateById(t *testing.T) {
 	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -536,11 +555,13 @@ func TestOrderRepository_UpdateById(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOrder.Item)
+
 	_ = sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -555,7 +576,7 @@ func TestOrderRepository_UpdateById(t *testing.T) {
 		mockOrder.OrderID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,
@@ -588,15 +609,15 @@ func TestOrderRepository_DeleteById(t *testing.T) {
 	brandUUID := uuid.New()
 	productUUID := uuid.New()
 	mockOrder := &models.Order{
-		OrderID:  orderUUID,
-		UserID:   userUUID,
+		OrderID: orderUUID,
+		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
 			ProductID:   productUUID,
 			Name:        "Name",
 			Description: "Description",
 			Price:       10000.00,
-			BrandID:    brandUUID,
+			BrandID:     brandUUID,
 		},
 		Quantity:                   1,
 		TotalPrice:                 10000.0,
@@ -605,11 +626,13 @@ func TestOrderRepository_DeleteById(t *testing.T) {
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
 
+	valueJson, _ := json.Marshal(mockOrder.Item)
+
 	_ = sqlmock.NewRows(columns).AddRow(
 		orderUUID,
 		mockOrder.UserID,
 		mockOrder.BrandID,
-		mockOrder.Item,
+		valueJson,
 		mockOrder.Quantity,
 		mockOrder.TotalPrice,
 		mockOrder.Status,

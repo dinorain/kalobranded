@@ -1,16 +1,16 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/go-playground/validator"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 
 	"github.com/dinorain/kalobranded/config"
 	"github.com/dinorain/kalobranded/internal/middlewares"
@@ -25,7 +25,7 @@ import (
 )
 
 type userHandlersHTTP struct {
-	group  *echo.Group
+	mux    *http.ServeMux
 	logger logger.Logger
 	cfg    *config.Config
 	mw     middlewares.MiddlewareManager
@@ -37,7 +37,7 @@ type userHandlersHTTP struct {
 var _ user.UserHandlers = (*userHandlersHTTP)(nil)
 
 func NewUserHandlersHTTP(
-	group *echo.Group,
+	mux *http.ServeMux,
 	logger logger.Logger,
 	cfg *config.Config,
 	mw middlewares.MiddlewareManager,
@@ -45,49 +45,53 @@ func NewUserHandlersHTTP(
 	userUC user.UserUseCase,
 	sessUC session.SessUseCase,
 ) *userHandlersHTTP {
-	return &userHandlersHTTP{group: group, logger: logger, cfg: cfg, mw: mw, v: v, userUC: userUC, sessUC: sessUC}
+	return &userHandlersHTTP{mux: mux, logger: logger, cfg: cfg, mw: mw, v: v, userUC: userUC, sessUC: sessUC}
 }
 
 // Register
 // @Tags Users
-// @Summary To register user
-// @Description Admin create user
+// @Summary Register user
+// @Description Create user
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
 // @Param payload body dto.UserRegisterRequestDto true "Payload"
 // @Success 200 {object} dto.UserRegisterResponseDto
-// @Router /user [post]
-func (h *userHandlersHTTP) Register() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-
-		createDto := &dto.UserRegisterRequestDto{}
-		if err := c.Bind(createDto); err != nil {
-			h.logger.WarnMsg("bind", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if err := h.v.StructCtx(ctx, createDto); err != nil {
-			h.logger.WarnMsg("validate", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err := h.registerReqToUserModel(createDto)
-
-		if err != nil {
-			h.logger.Errorf("registerReqToUserModel: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		createdUser, err := h.userUC.Register(ctx, user)
-		if err != nil {
-			h.logger.Errorf("userUC.Register: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		return c.JSON(http.StatusCreated, dto.UserRegisterResponseDto{UserID: createdUser.UserID})
+// @Router /user/create [post]
+func (h *userHandlersHTTP) Register(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
+
+	createDto := &dto.UserRegisterRequestDto{}
+	err = json.Unmarshal(b, &createDto)
+	if err != nil {
+		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	user, err := h.registerReqToUserModel(createDto)
+
+	if err != nil {
+		h.logger.Errorf("registerReqToUserModel: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	createdUser, err := h.userUC.Register(ctx, user)
+	if err != nil {
+		h.logger.Errorf("userUC.Register: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	res, _ := json.Marshal(dto.UserRegisterResponseDto{UserID: createdUser.UserID})
+	w.WriteHeader(http.StatusCreated)
+	w.Write(res)
+	return
 }
 
 // Login
@@ -99,51 +103,58 @@ func (h *userHandlersHTTP) Register() echo.HandlerFunc {
 // @Param payload body dto.UserLoginRequestDto true "Payload"
 // @Success 200 {object} dto.UserLoginResponseDto
 // @Router /user/login [post]
-func (h *userHandlersHTTP) Login() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
+func (h *userHandlersHTTP) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		loginDto := &dto.UserLoginRequestDto{}
-		if err := c.Bind(loginDto); err != nil {
-			h.logger.WarnMsg("bind", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if err := h.v.StructCtx(ctx, loginDto); err != nil {
-			h.logger.WarnMsg("validate", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		email := loginDto.Email
-		if !utils.ValidateEmail(email) {
-			h.logger.Errorf("ValidateEmail: %v", email)
-			return httpErrors.ErrorCtxResponse(c, errors.New("invalid email"), h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err := h.userUC.Login(ctx, email, loginDto.Password)
-		if err != nil {
-			h.logger.Errorf("userUC.Login: %v", email)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		session, err := h.sessUC.CreateSession(ctx, &models.Session{
-			UserID: user.UserID,
-		}, h.cfg.Session.Expire)
-		if err != nil {
-			h.logger.Errorf("sessUC.CreateSession: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		accessToken, refreshToken, err := h.userUC.GenerateTokenPair(user, session)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusCreated, dto.UserLoginResponseDto{UserID: user.UserID, Tokens: &dto.UserRefreshTokenResponseDto{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		}})
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
+
+	loginDto := &dto.UserLoginRequestDto{}
+	err = json.Unmarshal(b, &loginDto)
+	if err != nil {
+		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	email := loginDto.Email
+	if !utils.ValidateEmail(email) {
+		h.logger.Errorf("ValidateEmail: %v", email)
+		_ = httpErrors.ErrorCtxResponse(w, errors.New("invalid email"), h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	user, err := h.userUC.Login(ctx, email, loginDto.Password)
+	if err != nil {
+		h.logger.Errorf("userUC.Login: %v", email)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	session, err := h.sessUC.CreateSession(ctx, &models.Session{
+		UserID: user.UserID,
+	}, h.cfg.Session.Expire)
+	if err != nil {
+		h.logger.Errorf("sessUC.CreateSession: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	accessToken, refreshToken, err := h.userUC.GenerateTokenPair(user, session)
+	if err != nil {
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	res, _ := json.Marshal(dto.UserLoginResponseDto{UserID: user.UserID, Tokens: &dto.UserRefreshTokenResponseDto{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}})
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+	return
 }
 
 // FindAll
@@ -157,147 +168,72 @@ func (h *userHandlersHTTP) Login() echo.HandlerFunc {
 // @Param page query string false "pagination page"
 // @Success 200 {object} dto.UserFindResponseDto
 // @Router /user [get]
-func (h *userHandlersHTTP) FindAll() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-		pq := utils.NewPaginationFromQueryParams(c.QueryParam(constants.Size), c.QueryParam(constants.Page))
-		users, err := h.userUC.FindAll(ctx, pq)
-		if err != nil {
-			h.logger.Errorf("userUC.FindAll: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
+func (h *userHandlersHTTP) FindAll(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		return c.JSON(http.StatusOK, dto.UserFindResponseDto{
-			Data: users,
-			Meta: utils.PaginationMetaDto{
-				Limit:  pq.GetLimit(),
-				Offset: pq.GetOffset(),
-				Page:   pq.GetPage(),
-			},
-		})
+	queryParam := r.URL.Query()
+
+	if queryParam.Get("id") != "" {
+		h.FindById(w, r)
 	}
+
+	pq := utils.NewPaginationFromQueryParams(queryParam.Get(constants.Size), queryParam.Get(constants.Page))
+	users, err := h.userUC.FindAll(ctx, pq)
+	if err != nil {
+		h.logger.Errorf("userUC.FindAll: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	res, _ := json.Marshal(dto.UserFindResponseDto{
+		Data: users,
+		Meta: utils.PaginationMetaDto{
+			Limit:  pq.GetLimit(),
+			Offset: pq.GetOffset(),
+			Page:   pq.GetPage(),
+		}})
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+	return
 }
 
 // FindById
 // @Tags Users
-// @Summary Find user
-// @Description Find existing user by id
+// @Summary Find user by id
+// @Description Find user by id
 // @Accept json
 // @Produce json
 // @Security ApiKeyAuth
+// @Param id query string true "user uuid"
 // @Success 200 {object} dto.UserResponseDto
-// @Router /user/{id} [get]
-func (h *userHandlersHTTP) FindById() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
+// @Router /user [get]
+func (h *userHandlersHTTP) FindById(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		userUUID, err := uuid.Parse(c.Param("id"))
-		if err != nil {
-			h.logger.WarnMsg("uuid.FromString", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
+	queryParam := r.URL.Query()
 
-		user, err := h.userUC.CachedFindById(ctx, userUUID)
-		if err != nil {
-			h.logger.Errorf("userUC.CachedFindById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		return c.JSON(http.StatusOK, dto.UserResponseFromModel(user))
+	if queryParam.Get("id") == "" {
+		_ = httpErrors.NewBadRequestError(w, nil, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
-}
-
-// UpdateById
-// @Tags Users
-// @Summary Update user
-// @Description Update existing user
-// @Accept json
-// @Produce json
-// @Security ApiKeyAuth
-// @Param id path string true "User ID"
-// @Param payload body dto.UserUpdateRequestDto true "Payload"
-// @Success 200 {object} dto.UserResponseDto
-// @Router /user/{id} [put]
-func (h *userHandlersHTTP) UpdateById() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-
-		userUUID, err := uuid.Parse(c.Param("id"))
-		if err != nil {
-			h.logger.WarnMsg("uuid.FromString", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		_, userID, role, err := h.getSessionIDFromCtx(c)
-		if err != nil {
-			h.logger.Errorf("getSessionIDFromCtx: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if role != models.UserRoleAdmin && userID != userUUID.String() {
-			return httpErrors.NewForbiddenError(c, nil, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		updateDto := &dto.UserUpdateRequestDto{}
-		if err := c.Bind(updateDto); err != nil {
-			h.logger.WarnMsg("bind", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if err := h.v.StructCtx(ctx, updateDto); err != nil {
-			h.logger.WarnMsg("validate", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err := h.userUC.FindById(ctx, userUUID)
-		if err != nil {
-			h.logger.Errorf("userUC.FindById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err = h.updateReqToUserModel(user, updateDto)
-		if err != nil {
-			h.logger.Errorf("updateReqToUserModel: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err = h.userUC.UpdateById(ctx, user)
-		if err != nil {
-			h.logger.Errorf("userUC.UpdateById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		return c.JSON(http.StatusOK, dto.UserResponseFromModel(user))
+	userUUID, err := uuid.Parse(queryParam.Get("id"))
+	if err != nil {
+		h.logger.WarnMsg("uuid.FromString", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
-}
 
-// DeleteById
-// @Tags Users
-// @Summary Delete user
-// @Description Delete existing user
-// @Accept json
-// @Produce json
-// @Security ApiKeyAuth
-// @Success 200 {object} nil
-// @Param id path string true "User ID"
-// @Router /user/{id} [delete]
-func (h *userHandlersHTTP) DeleteById() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-
-		userUUID, err := uuid.Parse(c.Param("id"))
-		if err != nil {
-			h.logger.WarnMsg("uuid.FromString", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if err := h.userUC.DeleteById(ctx, userUUID); err != nil {
-			h.logger.Errorf("userUC.DeleteById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		return c.JSON(http.StatusOK, nil)
+	user, err := h.userUC.CachedFindById(ctx, userUUID)
+	if err != nil {
+		h.logger.Errorf("userUC.CachedFindById: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
+
+	res, _ := json.Marshal(dto.UserResponseFromModel(user))
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+	return
 }
 
 // GetMe
@@ -309,32 +245,37 @@ func (h *userHandlersHTTP) DeleteById() echo.HandlerFunc {
 // @Security ApiKeyAuth
 // @Success 200 {object} dto.UserResponseDto
 // @Router /user/me [get]
-func (h *userHandlersHTTP) GetMe() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-		sessID, _, _, err := h.getSessionIDFromCtx(c)
-		if err != nil {
-			h.logger.Errorf("getSessionIDFromCtx: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		session, err := h.sessUC.GetSessionById(ctx, sessID)
-		if err != nil {
-			h.logger.Errorf("sessUC.GetSessionById: %v", err)
-			if errors.Is(err, redis.Nil) {
-				return httpErrors.NewUnauthorizedError(c, nil, h.cfg.Http.DebugErrorsResponse)
-			}
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err := h.userUC.CachedFindById(ctx, session.UserID)
-		if err != nil {
-			h.logger.Errorf("userUC.CachedFindById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		return c.JSON(http.StatusOK, dto.UserResponseFromModel(user))
+func (h *userHandlersHTTP) GetMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	sessID, _, _, err := h.getSessionIDFromCtx(w, r)
+	if err != nil {
+		h.logger.Errorf("getSessionIDFromCtx: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
+
+	session, err := h.sessUC.GetSessionById(ctx, sessID)
+	if err != nil {
+		h.logger.Errorf("sessUC.GetSessionById: %v", err)
+		if errors.Is(err, redis.Nil) {
+			_ = httpErrors.NewUnauthorizedError(w, nil, h.cfg.Http.DebugErrorsResponse)
+			return
+		}
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	user, err := h.userUC.CachedFindById(ctx, session.UserID)
+	if err != nil {
+		h.logger.Errorf("userUC.CachedFindById: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	res, _ := json.Marshal(dto.UserResponseFromModel(user))
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+	return
 }
 
 // Logout
@@ -346,22 +287,22 @@ func (h *userHandlersHTTP) GetMe() echo.HandlerFunc {
 // @Security ApiKeyAuth
 // @Success 200 {object} nil
 // @Router /user/logout [post]
-func (h *userHandlersHTTP) Logout() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
-		sessID, _, _, err := h.getSessionIDFromCtx(c)
-		if err != nil {
-			h.logger.Errorf("getSessionIDFromCtx: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if err := h.sessUC.DeleteById(ctx, sessID); err != nil {
-			h.logger.Errorf("sessUC.DeleteById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		return c.JSON(http.StatusOK, nil)
+func (h *userHandlersHTTP) Logout(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	sessID, _, _, err := h.getSessionIDFromCtx(w, r)
+	if err != nil {
+		h.logger.Errorf("getSessionIDFromCtx: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
+
+	if err := h.sessUC.DeleteById(ctx, sessID); err != nil {
+		h.logger.Errorf("sessUC.DeleteById: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // RefreshToken
@@ -373,88 +314,96 @@ func (h *userHandlersHTTP) Logout() echo.HandlerFunc {
 // @Param payload body dto.UserRefreshTokenDto true "Payload"
 // @Success 200 {object} dto.UserRefreshTokenResponseDto
 // @Router /user/refresh [post]
-func (h *userHandlersHTTP) RefreshToken() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		ctx := c.Request().Context()
+func (h *userHandlersHTTP) RefreshToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		refreshTokenDto := &dto.UserRefreshTokenDto{}
-		if err := c.Bind(refreshTokenDto); err != nil {
-			h.logger.WarnMsg("bind", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		token, err := jwt.Parse(refreshTokenDto.RefreshToken, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				h.logger.Errorf("jwt.SigningMethodHMAC: %v", token.Header["alg"])
-				return nil, fmt.Errorf("jwt.SigningMethodHMAC: %v", token.Header["alg"])
-			}
-
-			return []byte(h.cfg.Server.JwtSecretKey), nil
-		})
-
-		if err != nil {
-			h.logger.Warnf("jwt.Parse")
-			return httpErrors.ErrorCtxResponse(c, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
-		}
-
-		if !token.Valid {
-			h.logger.Warnf("token.Valid")
-			return httpErrors.ErrorCtxResponse(c, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			h.logger.Warnf("jwt.MapClaims: %+v", token.Claims)
-			return httpErrors.ErrorCtxResponse(c, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
-		}
-
-		sessID, ok := claims["session_id"].(string)
-		if !ok {
-			h.logger.Warnf("session_id: %+v", claims)
-			return httpErrors.ErrorCtxResponse(c, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
-		}
-
-		session, err := h.sessUC.GetSessionById(ctx, sessID)
-		if err != nil {
-			h.logger.Errorf("sessUC.GetSessionById: %v", err)
-			if errors.Is(err, redis.Nil) {
-				return httpErrors.NewUnauthorizedError(c, nil, h.cfg.Http.DebugErrorsResponse)
-			}
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		user, err := h.userUC.FindById(ctx, session.UserID)
-		if err != nil {
-			h.logger.Errorf("userUC.FindById: %v", err)
-			return httpErrors.ErrorCtxResponse(c, err, h.cfg.Http.DebugErrorsResponse)
-		}
-
-		accessToken, refreshToken, err := h.userUC.GenerateTokenPair(user, sessID)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusOK, dto.UserRefreshTokenResponseDto{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		})
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
 	}
+
+	refreshTokenDto := &dto.UserRefreshTokenDto{}
+	err = json.Unmarshal(b, &refreshTokenDto)
+	if err != nil {
+		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	token, err := jwt.Parse(refreshTokenDto.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			h.logger.Errorf("jwt.SigningMethodHMAC: %v", token.Header["alg"])
+			return nil, fmt.Errorf("jwt.SigningMethodHMAC: %v", token.Header["alg"])
+		}
+
+		return []byte(h.cfg.Server.JwtSecretKey), nil
+	})
+
+	if err != nil {
+		h.logger.Warnf("jwt.Parse")
+		_ = httpErrors.ErrorCtxResponse(w, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
+	}
+
+	if !token.Valid {
+		h.logger.Warnf("token.Valid")
+		_ = httpErrors.ErrorCtxResponse(w, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		h.logger.Warnf("jwt.MapClaims: %+v", token.Claims)
+		_ = httpErrors.ErrorCtxResponse(w, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	sessID, ok := claims["session_id"].(string)
+	if !ok {
+		h.logger.Warnf("session_id: %+v", claims)
+		_ = httpErrors.ErrorCtxResponse(w, errors.New("invalid refresh token"), h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	session, err := h.sessUC.GetSessionById(ctx, sessID)
+	if err != nil {
+		h.logger.Errorf("sessUC.GetSessionById: %v", err)
+		if errors.Is(err, redis.Nil) {
+			_ = httpErrors.NewUnauthorizedError(w, nil, h.cfg.Http.DebugErrorsResponse)
+			return
+		}
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	user, err := h.userUC.FindById(ctx, session.UserID)
+	if err != nil {
+		h.logger.Errorf("userUC.FindById: %v", err)
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	accessToken, refreshToken, err := h.userUC.GenerateTokenPair(user, sessID)
+	if err != nil {
+		_ = httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	res, _ := json.Marshal(dto.UserRefreshTokenResponseDto{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	})
+	w.WriteHeader(http.StatusOK)
+	w.Write(res)
+	return
 }
 
-func (h *userHandlersHTTP) getSessionIDFromCtx(c echo.Context) (sessionID string, userID string, role string, err error) {
-	user, ok := c.Get("user").(*jwt.Token)
-	if !ok {
-		h.logger.Warnf("jwt.Token: %+v", c.Get("user"))
-		return "", "", "", errors.New("invalid token header")
+func (h *userHandlersHTTP) getSessionIDFromCtx(w http.ResponseWriter, r *http.Request) (sessionID string, userID string, role string, err error) {
+	jwtClaims, err := h.mw.GetJWTClaims(w, r)
+	if err != nil {
+		return
 	}
-
-	claims, ok := user.Claims.(jwt.MapClaims)
-	if !ok {
-		h.logger.Warnf("jwt.MapClaims: %+v", c.Get("user"))
-		return "", "", "", errors.New("invalid token header")
-	}
-
-	sessionID, ok = claims["session_id"].(string)
+	claims := *jwtClaims
+	sessionID, ok := claims["session_id"].(string)
 	if !ok {
 		h.logger.Warnf("session_id: %+v", claims)
 		return "", "", "", errors.New("invalid token header")
@@ -491,29 +440,4 @@ func (h *userHandlersHTTP) registerReqToUserModel(r *dto.UserRegisterRequestDto)
 	}
 
 	return userCandidate, nil
-}
-
-func (h *userHandlersHTTP) updateReqToUserModel(updateCandidate *models.User, r *dto.UserUpdateRequestDto) (*models.User, error) {
-
-	if r.FirstName != nil {
-		updateCandidate.FirstName = strings.TrimSpace(*r.FirstName)
-	}
-	if r.LastName != nil {
-		updateCandidate.LastName = strings.TrimSpace(*r.LastName)
-	}
-	if r.DeliveryAddress != nil {
-		updateCandidate.DeliveryAddress = strings.TrimSpace(*r.DeliveryAddress)
-	}
-	if r.Avatar != nil {
-		avatar := strings.TrimSpace(*r.Avatar)
-		updateCandidate.Avatar = &avatar
-	}
-	if r.Password != nil {
-		updateCandidate.Password = *r.Password
-		if err := updateCandidate.HashPassword(); err != nil {
-			return nil, err
-		}
-	}
-
-	return updateCandidate, nil
 }

@@ -1,12 +1,9 @@
 package handlers
 
+import "net/http"
+
 func (h *brandHandlersHTTP) BrandMapRoutes() {
-	h.group.Use(h.mw.IsLoggedIn())
-
-	h.group.GET("/:id", h.FindById())
-
-	h.group.PUT("/:id", h.UpdateById(), h.mw.IsAdmin)
-	h.group.POST("", h.Register(), h.mw.IsAdmin)
-	h.group.GET("", h.FindAll(), h.mw.IsAdmin)
-	h.group.DELETE("/:id", h.DeleteById(), h.mw.IsAdmin)
+	h.mux.Handle("/brand/create", h.mw.IsAdmin(http.HandlerFunc(h.Create)))
+	h.mux.Handle("/brand", h.mw.GetHandler(http.HandlerFunc(h.FindAll)))
+	h.mux.Handle("/brand?id=", h.mw.GetHandler(http.HandlerFunc(h.FindById)))
 }

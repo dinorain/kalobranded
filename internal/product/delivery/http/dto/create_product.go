@@ -5,9 +5,10 @@ import (
 )
 
 type ProductCreateRequestDto struct {
-	Name        string  `json:"name" validate:"required,lte=30"`
-	Description string  `json:"description" validate:"required,lte=250"`
-	Price       float64 `json:"price" validate:"required"`
+	Name        string    `json:"name" validate:"required,lte=30"`
+	Description string    `json:"description" validate:"required,lte=250"`
+	Price       float64   `json:"price" validate:"required"`
+	BrandID     uuid.UUID `json:"brand_id" validate:"required"`
 }
 
 type ProductCreateResponseDto struct {

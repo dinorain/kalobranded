@@ -1,16 +1,13 @@
 package handlers
 
+import "net/http"
+
 func (h *userHandlersHTTP) UserMapRoutes() {
-	h.group.POST("/refresh", h.RefreshToken())
-	h.group.POST("/login", h.Login())
-
-	h.group.Use(h.mw.IsLoggedIn())
-	h.group.POST("/logout", h.Logout())
-	h.group.GET("/:id", h.FindById())
-	h.group.PUT("/:id", h.UpdateById(), h.mw.IsUser)
-	h.group.GET("/me", h.GetMe())
-
-	h.group.GET("", h.FindAll())
-	h.group.POST("", h.Register(), h.mw.IsAdmin)
-	h.group.DELETE("/:id", h.DeleteById(), h.mw.IsAdmin)
+	h.mux.Handle("/user/create", http.HandlerFunc(h.Register))
+	h.mux.Handle("/user", h.mw.GetHandler(http.HandlerFunc(h.FindAll)))
+	h.mux.Handle("/user?id=", h.mw.GetHandler(http.HandlerFunc(h.FindById)))
+	h.mux.Handle("/user/me", h.mw.GetHandler(http.HandlerFunc(h.GetMe)))
+	h.mux.Handle("/user/login", h.mw.PostHandler(http.HandlerFunc(h.Login)))
+	h.mux.Handle("/user/logout", h.mw.PostHandler(http.HandlerFunc(h.Logout)))
+	h.mux.Handle("/user/refresh", h.mw.PostHandler(http.HandlerFunc(h.RefreshToken)))
 }

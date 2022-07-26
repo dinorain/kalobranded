@@ -20,6 +20,82 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/brand": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Find brand by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Brands"
+                ],
+                "summary": "Find brand by id",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "brand uuid",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BrandResponseDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/brand/create": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create brand",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Brands"
+                ],
+                "summary": "Create brand",
+                "parameters": [
+                    {
+                        "description": "Payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BrandRegisterRequestDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BrandRegisterResponseDto"
+                        }
+                    }
+                }
+            }
+        },
         "/order": {
             "get": {
                 "security": [
@@ -27,7 +103,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Find all orders",
+                "description": "Find order by id",
                 "consumes": [
                     "application/json"
                 ],
@@ -37,18 +113,12 @@ const docTemplate = `{
                 "tags": [
                     "Orders"
                 ],
-                "summary": "Find all orders",
+                "summary": "Find order by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "pagination size",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "pagination page",
-                        "name": "page",
+                        "description": "order uuid",
+                        "name": "id",
                         "in": "query"
                     }
                 ],
@@ -56,7 +126,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.OrderFindResponseDto"
+                            "$ref": "#/definitions/dto.OrderResponseDto"
                         }
                     }
                 }
@@ -67,7 +137,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Admin create order",
+                "description": "Order create order",
                 "consumes": [
                     "application/json"
                 ],
@@ -77,7 +147,7 @@ const docTemplate = `{
                 "tags": [
                     "Orders"
                 ],
-                "summary": "To register order",
+                "summary": "To create order",
                 "parameters": [
                     {
                         "description": "Payload",
@@ -99,69 +169,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/order/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Find existing order by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Orders"
-                ],
-                "summary": "Find order",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.OrderResponseDto"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Brand accept order",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Orders"
-                ],
-                "summary": "Accept order",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Order ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.OrderResponseDto"
-                        }
-                    }
-                }
-            }
-        },
         "/product": {
             "get": {
                 "security": [
@@ -169,7 +176,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Find all products",
+                "description": "Find all products by brand is",
                 "consumes": [
                     "application/json"
                 ],
@@ -179,8 +186,14 @@ const docTemplate = `{
                 "tags": [
                     "Products"
                 ],
-                "summary": "Find all products",
+                "summary": "Find all products by brand",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "brand uuid",
+                        "name": "id",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "pagination size",
@@ -209,7 +222,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Brand create product",
+                "description": "Create product",
                 "consumes": [
                     "application/json"
                 ],
@@ -219,7 +232,7 @@ const docTemplate = `{
                 "tags": [
                     "Products"
                 ],
-                "summary": "To create product",
+                "summary": "Create product",
                 "parameters": [
                     {
                         "description": "Payload",
@@ -241,414 +254,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/product/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Find existing product by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Products"
-                ],
-                "summary": "Find product",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductResponseDto"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Update existing product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Products"
-                ],
-                "summary": "Update product",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductUpdateRequestDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.ProductResponseDto"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete existing product",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Products"
-                ],
-                "summary": "Delete product",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Product ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/brand": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Admin find all brands",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Find all brands",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "pagination size",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "pagination page",
-                        "name": "page",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandFindResponseDto"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Admin create brand",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "To register brand",
-                "parameters": [
-                    {
-                        "description": "Payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandRegisterRequestDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandRegisterResponseDto"
-                        }
-                    }
-                }
-            }
-        },
-        "/brand/login": {
-            "post": {
-                "description": "Brand login with email and password",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Brand login",
-                "parameters": [
-                    {
-                        "description": "Payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandLoginRequestDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandLoginResponseDto"
-                        }
-                    }
-                }
-            }
-        },
-        "/brand/logout": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete current session",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Brand logout",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/brand/me": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Get session id from token, find brand by uuid and returns it",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Find me",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandResponseDto"
-                        }
-                    }
-                }
-            }
-        },
-        "/brand/refresh": {
-            "post": {
-                "description": "Refresh access token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Refresh access token",
-                "parameters": [
-                    {
-                        "description": "Payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandRefreshTokenDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandRefreshTokenResponseDto"
-                        }
-                    }
-                }
-            }
-        },
-        "/brand/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Find existing brand by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Find brand",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandResponseDto"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Update existing brand",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Update brand",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Brand ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandUpdateRequestDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.BrandResponseDto"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete existing brand, admin only",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Brands"
-                ],
-                "summary": "Delete brand",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Brand ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/user": {
             "get": {
                 "security": [
@@ -656,7 +261,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Admin find all users",
+                "description": "Find user by id",
                 "consumes": [
                     "application/json"
                 ],
@@ -666,37 +271,34 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Find all users",
+                "summary": "Find user by id",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "pagination size",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "pagination page",
-                        "name": "page",
-                        "in": "query"
+                        "description": "user uuid",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.UserFindResponseDto"
+                            "$ref": "#/definitions/dto.UserResponseDto"
                         }
                     }
                 }
-            },
+            }
+        },
+        "/user/create": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Admin create user",
+                "description": "Create user",
                 "consumes": [
                     "application/json"
                 ],
@@ -706,7 +308,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "To register user",
+                "summary": "Register user",
                 "parameters": [
                     {
                         "description": "Payload",
@@ -848,113 +450,71 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/user/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Find existing user by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Find user",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserResponseDto"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Update existing user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Update user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Payload",
-                        "name": "payload",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserUpdateRequestDto"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/dto.UserResponseDto"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete existing user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Delete user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
         }
     },
     "definitions": {
+        "dto.BrandFindResponseDto": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "meta": {
+                    "$ref": "#/definitions/utils.PaginationMetaDto"
+                }
+            }
+        },
+        "dto.BrandRegisterRequestDto": {
+            "type": "object",
+            "required": [
+                "brand_name",
+                "pickup_address"
+            ],
+            "properties": {
+                "brand_name": {
+                    "type": "string",
+                    "maxLength": 30
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "pickup_address": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BrandRegisterResponseDto": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BrandResponseDto": {
+            "type": "object",
+            "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
+                "brand_name": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "logo": {
+                    "type": "string"
+                },
+                "pickup_address": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.OrderCreateRequestDto": {
             "type": "object",
             "required": [
@@ -993,6 +553,9 @@ const docTemplate = `{
         "dto.OrderResponseDto": {
             "type": "object",
             "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1011,9 +574,6 @@ const docTemplate = `{
                 "quantity": {
                     "type": "integer"
                 },
-                "brand_id": {
-                    "type": "string"
-                },
                 "status": {
                     "type": "string"
                 },
@@ -1031,11 +591,15 @@ const docTemplate = `{
         "dto.ProductCreateRequestDto": {
             "type": "object",
             "required": [
+                "brand_id",
                 "description",
                 "name",
                 "price"
             ],
             "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 250
@@ -1072,6 +636,9 @@ const docTemplate = `{
         "dto.ProductResponseDto": {
             "type": "object",
             "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1087,184 +654,7 @@ const docTemplate = `{
                 "product_id": {
                     "type": "string"
                 },
-                "brand_id": {
-                    "type": "string"
-                },
                 "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ProductUpdateRequestDto": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "maxLength": 250
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "price": {
-                    "type": "number"
-                }
-            }
-        },
-        "dto.BrandFindResponseDto": {
-            "type": "object",
-            "properties": {
-                "data": {},
-                "meta": {
-                    "$ref": "#/definitions/utils.PaginationMetaDto"
-                }
-            }
-        },
-        "dto.BrandLoginRequestDto": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 60
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandLoginResponseDto": {
-            "type": "object",
-            "required": [
-                "tokens",
-                "user_id"
-            ],
-            "properties": {
-                "tokens": {
-                    "$ref": "#/definitions/dto.BrandRefreshTokenResponseDto"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandRefreshTokenDto": {
-            "type": "object",
-            "required": [
-                "refresh_token"
-            ],
-            "properties": {
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandRefreshTokenResponseDto": {
-            "type": "object",
-            "required": [
-                "access_token",
-                "refresh_token"
-            ],
-            "properties": {
-                "access_token": {
-                    "type": "string"
-                },
-                "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandRegisterRequestDto": {
-            "type": "object",
-            "required": [
-                "email",
-                "first_name",
-                "last_name",
-                "password",
-                "pickup_address"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 60
-                },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "password": {
-                    "type": "string"
-                },
-                "pickup_address": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandRegisterResponseDto": {
-            "type": "object",
-            "required": [
-                "user_id"
-            ],
-            "properties": {
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandResponseDto": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "pickup_address": {
-                    "type": "string"
-                },
-                "brand_id": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "dto.BrandUpdateRequestDto": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "password": {
-                    "type": "string"
-                },
-                "pickup_address": {
                     "type": "string"
                 }
             }
@@ -1412,31 +802,12 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UserUpdateRequestDto": {
-            "type": "object",
-            "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "delivery_address": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 30
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
         "models.OrderItem": {
             "type": "object",
             "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1450,9 +821,6 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "product_id": {
-                    "type": "string"
-                },
-                "brand_id": {
                     "type": "string"
                 },
                 "updated_at": {

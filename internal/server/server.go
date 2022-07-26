@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,35 +11,35 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
-	"github.com/labstack/echo/v4"
 
 	"github.com/dinorain/kalobranded/config"
 	"github.com/dinorain/kalobranded/internal/middlewares"
 	"github.com/dinorain/kalobranded/pkg/logger"
 
+	brandDeliveryHTTP "github.com/dinorain/kalobranded/internal/brand/delivery/http/handlers"
 	orderDeliveryHTTP "github.com/dinorain/kalobranded/internal/order/delivery/http/handlers"
 	productDeliveryHTTP "github.com/dinorain/kalobranded/internal/product/delivery/http/handlers"
-	brandDeliveryHTTP "github.com/dinorain/kalobranded/internal/brand/delivery/http/handlers"
 	userDeliveryHTTP "github.com/dinorain/kalobranded/internal/user/delivery/http/handlers"
 
+	brandUseCase "github.com/dinorain/kalobranded/internal/brand/usecase"
 	orderUseCase "github.com/dinorain/kalobranded/internal/order/usecase"
 	productUseCase "github.com/dinorain/kalobranded/internal/product/usecase"
-	brandUseCase "github.com/dinorain/kalobranded/internal/brand/usecase"
 	sessUseCase "github.com/dinorain/kalobranded/internal/session/usecase"
 	userUseCase "github.com/dinorain/kalobranded/internal/user/usecase"
 
+	brandRepository "github.com/dinorain/kalobranded/internal/brand/repository"
 	orderRepository "github.com/dinorain/kalobranded/internal/order/repository"
 	productRepository "github.com/dinorain/kalobranded/internal/product/repository"
-	brandRepository "github.com/dinorain/kalobranded/internal/brand/repository"
 	sessRepository "github.com/dinorain/kalobranded/internal/session/repository"
 	userRepository "github.com/dinorain/kalobranded/internal/user/repository"
 )
 
 type Server struct {
+	mux         *http.ServeMux
+	httpS       *http.Server
 	logger      logger.Logger
 	cfg         *config.Config
 	v           *validator.Validate
-	echo        *echo.Echo
 	mw          middlewares.MiddlewareManager
 	db          *sqlx.DB
 	redisClient *redis.Client
@@ -50,7 +51,7 @@ func NewAppServer(logger logger.Logger, cfg *config.Config, db *sqlx.DB, redisCl
 		logger:      logger,
 		cfg:         cfg,
 		v:           validator.New(),
-		echo:        echo.New(),
+		mux:         http.NewServeMux(),
 		db:          db,
 		redisClient: redisClient,
 	}
@@ -83,16 +84,16 @@ func (s *Server) Run() error {
 	}
 	defer l.Close()
 
-	userHandlers := userDeliveryHTTP.NewUserHandlersHTTP(s.echo.Group("user"), s.logger, s.cfg, s.mw, s.v, userUC, sessUC)
+	userHandlers := userDeliveryHTTP.NewUserHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, userUC, sessUC)
 	userHandlers.UserMapRoutes()
 
-	brandHandlers := brandDeliveryHTTP.NewBrandHandlersHTTP(s.echo.Group("brand"), s.logger, s.cfg, s.mw, s.v, brandUC, sessUC)
+	brandHandlers := brandDeliveryHTTP.NewBrandHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, brandUC, sessUC)
 	brandHandlers.BrandMapRoutes()
 
-	productHandlers := productDeliveryHTTP.NewProductHandlersHTTP(s.echo.Group("product"), s.logger, s.cfg, s.mw, s.v, productUC, sessUC)
+	productHandlers := productDeliveryHTTP.NewProductHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, productUC, sessUC)
 	productHandlers.ProductMapRoutes()
 
-	orderHandlers := orderDeliveryHTTP.NewOrderHandlersHTTP(s.echo.Group("order"), s.logger, s.cfg, s.mw, s.v, orderUC, userUC, brandUC, productUC, sessUC)
+	orderHandlers := orderDeliveryHTTP.NewOrderHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, orderUC, userUC, brandUC, productUC, sessUC)
 	orderHandlers.OrderMapRoutes()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
@@ -106,8 +107,8 @@ func (s *Server) Run() error {
 	}()
 
 	<-ctx.Done()
-	if err := s.echo.Server.Shutdown(ctx); err != nil {
-		s.logger.WarnMsg("echo.Server.Shutdown", err)
+	if err := s.httpS.Shutdown(ctx); err != nil {
+		s.logger.WarnMsg("httpS.Server.Shutdown", err)
 	}
 
 	return nil

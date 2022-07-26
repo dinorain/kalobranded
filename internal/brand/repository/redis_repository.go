@@ -8,8 +8,8 @@ import (
 
 	"github.com/go-redis/redis/v8"
 
-	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/internal/brand"
+	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/pkg/logger"
 )
 

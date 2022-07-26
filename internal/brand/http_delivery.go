@@ -1,12 +1,12 @@
 package brand
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
+)
 
 // Brand HTTP Handlers interface
 type BrandHandlers interface {
-	Register() echo.HandlerFunc
-	FindAll() echo.HandlerFunc
-	FindById() echo.HandlerFunc
-	UpdateById() echo.HandlerFunc
-	DeleteById() echo.HandlerFunc
+	Create(w http.ResponseWriter, r *http.Request)
+	FindAll(w http.ResponseWriter, r *http.Request)
+	FindById(w http.ResponseWriter, r *http.Request)
 }

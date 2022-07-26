@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,8 +15,6 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dinorain/kalobranded/config"
@@ -42,16 +42,21 @@ func TestOrdersHandler_Create(t *testing.T) {
 	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	productUC := mockProductUC.NewMockProductUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
 
+	mux := http.NewServeMux()
+	handlers := NewOrderHandlersHTTP(mux, appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
+
+	userUUID := uuid.New()
+	brandUUID := uuid.New()
+	orderUUID := uuid.New()
+	sessUUID := uuid.New()
 	productUUID := uuid.New()
+
 	reqDto := &dto.OrderCreateRequestDto{
 		ProductID: productUUID,
 		Quantity:  1,
@@ -60,46 +65,46 @@ func TestOrdersHandler_Create(t *testing.T) {
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(reqDto)
 
-	userUUID := uuid.New()
-	brandUUID := uuid.New()
-	sessUUID := uuid.New()
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["session_id"] = sessUUID.String()
 	claims["user_id"] = userUUID.String()
 	claims["role"] = models.UserRoleUser
 	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	validToken, _ := token.SignedString([]byte("secret"))
+	validToken, _ := token.SignedString([]byte(cfg.Server.JwtSecretKey))
 
-	req := httptest.NewRequest(http.MethodPost, "/order", buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	req := httptest.NewRequest(http.MethodPost, "/order/create", buf)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", validToken))
+	w := httptest.NewRecorder()
 
-	resDto := &dto.OrderCreateResponseDto{
-		OrderID: uuid.Nil,
+	wDto := &dto.OrderCreateResponseDto{
+		OrderID: orderUUID,
 	}
 
-	buf, _ = converter.AnyToBytesBuffer(resDto)
+	buf, _ = converter.AnyToBytesBuffer(wDto)
 
-	handler := handlers.Create()
-	h := middleware.JWTWithConfig(middleware.JWTConfig{
-		Claims:     claims,
-		SigningKey: []byte("secret"),
-	})(handler)
-
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
+	sessUC.EXPECT().GetSessionById(gomock.Any(), sessUUID.String()).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
 	userUC.EXPECT().CachedFindById(gomock.Any(), userUUID).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
 	productUC.EXPECT().CachedFindById(gomock.Any(), productUUID).AnyTimes().Return(&models.Product{ProductID: productUUID, BrandID: brandUUID}, nil)
 	brandUC.EXPECT().CachedFindById(gomock.Any(), brandUUID).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
-	orderUC.EXPECT().Create(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{Item: models.OrderItem{ProductID: productUUID}}, nil)
-	require.NoError(t, h(ctx))
-	require.Equal(t, http.StatusCreated, res.Code)
-	require.Equal(t, buf.String(), res.Body.String())
+	orderUC.EXPECT().Create(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{OrderID: orderUUID}, nil)
+
+	handler := http.HandlerFunc(handlers.Create)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusCreated, w.Code)
+	require.Equal(t, strings.Trim(buf.String(), "\n"), string(data))
 }
 
-func TestOrdersHandler_FindAll(t *testing.T) {
+func TestOrdersHandler_Find(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -111,23 +116,26 @@ func TestOrdersHandler_FindAll(t *testing.T) {
 	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	productUC := mockProductUC.NewMockProductUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewOrderHandlersHTTP(mux, appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
 
 	userUUID := uuid.New()
 	brandUUID := uuid.New()
+	orderUUID := uuid.New()
+	sessUUID := uuid.New()
 	productUUID := uuid.New()
 
 	var orders []models.Order
+	var oneOnly []models.Order
 
 	m := models.Order{
-		OrderID: uuid.New(),
+		OrderID: orderUUID,
 		UserID:  userUUID,
 		BrandID: brandUUID,
 		Item: models.OrderItem{
@@ -143,225 +151,115 @@ func TestOrdersHandler_FindAll(t *testing.T) {
 		DeliverySourceAddress:      "DeliverySourceAddress",
 		DeliveryDestinationAddress: "DeliveryDestinationAddress",
 	}
-	orders = append(orders, m, m)
+	oneOnly = append(oneOnly, m)
+	orders = append(orders, m, models.Order{UserID: uuid.New()})
 
-	userOrders := make([]models.Order, len(orders)+1)
-	copy(userOrders, orders)
-
-	m.BrandID = uuid.New()
-	userOrders = append(userOrders, m)
-
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	sessUUID := uuid.New()
-	claims["session_id"] = sessUUID.String()
-	claims["brand_id"] = brandUUID.String()
-	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	validToken, _ := token.SignedString([]byte("secret"))
-
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
-	orderUC.EXPECT().FindAllByBrandId(gomock.Any(), brandUUID, gomock.Any()).AnyTimes().Return(orders, nil)
-	orderUC.EXPECT().FindAllByUserId(gomock.Any(), userUUID, gomock.Any()).AnyTimes().Return(userOrders, nil)
-	orderUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(userOrders, nil)
-
-	t.Run("Filtered view when accessed by brand", func(t *testing.T) {
-
-		req := httptest.NewRequest(http.MethodGet, "/order", nil)
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
-
-		handler := handlers.FindAll()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
-
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusOK, res.Code)
-
-		resDto := &dto.OrderFindResponseDto{}
-		_ = json.Unmarshal(res.Body.Bytes(), resDto)
-
-		require.Equal(t, len(resDto.Data.([]interface{})), len(orders))
-	})
-
-	t.Run("All orders view when accessed by user", func(t *testing.T) {
-
+	t.Run("ByUserRole", func(t *testing.T) {
+		token := jwt.New(jwt.SigningMethodHS256)
+		claims := token.Claims.(jwt.MapClaims)
 		claims["session_id"] = sessUUID.String()
 		claims["user_id"] = userUUID.String()
 		claims["role"] = models.UserRoleUser
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-		validToken, _ := token.SignedString([]byte("secret"))
+		validToken, _ := token.SignedString([]byte(cfg.Server.JwtSecretKey))
 
 		req := httptest.NewRequest(http.MethodGet, "/order", nil)
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", validToken))
+		w := httptest.NewRecorder()
 
-		handler := handlers.FindAll()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
+		orderUC.EXPECT().FindAllByUserId(gomock.Any(), userUUID, gomock.Any()).AnyTimes().Return(oneOnly, nil)
+		sessUC.EXPECT().GetSessionById(gomock.Any(), sessUUID.String()).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
+		userUC.EXPECT().CachedFindById(gomock.Any(), userUUID).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
 
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusOK, res.Code)
+		handler := http.HandlerFunc(handlers.FindAll)
+		handler.ServeHTTP(w, req)
+
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := ioutil.ReadAll(w.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+		require.NotNil(t, data)
+		require.Equal(t, http.StatusOK, w.Code)
 
 		resDto := &dto.OrderFindResponseDto{}
-		_ = json.Unmarshal(res.Body.Bytes(), resDto)
+		_ = json.Unmarshal(data, resDto)
 
-		require.Equal(t, len(resDto.Data.([]interface{})), len(userOrders))
+		require.Equal(t, len(oneOnly), len(resDto.Data.([]interface{})))
 	})
 
-	t.Run("All orders view when accessed by admin", func(t *testing.T) {
-
+	t.Run("ByAdminRole", func(t *testing.T) {
+		token := jwt.New(jwt.SigningMethodHS256)
+		claims := token.Claims.(jwt.MapClaims)
 		claims["session_id"] = sessUUID.String()
 		claims["user_id"] = userUUID.String()
 		claims["role"] = models.UserRoleAdmin
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-		validToken, _ := token.SignedString([]byte("secret"))
+		validToken, _ := token.SignedString([]byte(cfg.Server.JwtSecretKey))
 
 		req := httptest.NewRequest(http.MethodGet, "/order", nil)
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", validToken))
+		w := httptest.NewRecorder()
 
-		handler := handlers.FindAll()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
+		orderUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(orders, nil)
+		sessUC.EXPECT().GetSessionById(gomock.Any(), sessUUID.String()).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
+		userUC.EXPECT().CachedFindById(gomock.Any(), userUUID).AnyTimes().Return(&models.User{UserID: userUUID}, nil)
 
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusOK, res.Code)
+		handler := http.HandlerFunc(handlers.FindAll)
+		handler.ServeHTTP(w, req)
+
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := ioutil.ReadAll(w.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+		require.NotNil(t, data)
+		require.Equal(t, http.StatusOK, w.Code)
 
 		resDto := &dto.OrderFindResponseDto{}
-		_ = json.Unmarshal(res.Body.Bytes(), resDto)
+		_ = json.Unmarshal(data, resDto)
 
-		require.Equal(t, len(resDto.Data.([]interface{})), len(userOrders))
-	})
-}
-
-func TestOrdersHandler_FindById(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	orderUC := mock.NewMockOrderUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
-	userUC := mockUserUC.NewMockUserUseCase(ctrl)
-	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
-	productUC := mockProductUC.NewMockProductUseCase(ctrl)
-
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
-
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
-	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
-
-	req := httptest.NewRequest(http.MethodGet, "/order/:id", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	ctx.SetParamNames("id")
-	ctx.SetParamValues("2ceba62a-35f4-444b-a358-4b14834837e1")
-
-	orderUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{}, nil)
-	require.NoError(t, handlers.FindById()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
-}
-
-func TestOrdersHandler_AcceptById(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	orderUC := mock.NewMockOrderUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
-	userUC := mockUserUC.NewMockUserUseCase(ctrl)
-	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
-	productUC := mockProductUC.NewMockProductUseCase(ctrl)
-
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
-
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
-	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewOrderHandlersHTTP(e.Group("order"), appLogger, cfg, mw, v, orderUC, userUC, brandUC, productUC, sessUC)
-
-	brandUUID := uuid.New()
-	orderUUID := uuid.New()
-	sessUUID := uuid.New()
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-
-	sessUC.EXPECT().GetSessionById(gomock.Any(), claims["session_id"]).AnyTimes().Return(&models.Session{UserID: brandUUID, SessionID: sessUUID.String()}, nil)
-	orderUC.EXPECT().FindById(gomock.Any(), orderUUID).AnyTimes().Return(&models.Order{BrandID: brandUUID}, nil)
-	orderUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Order{BrandID: brandUUID}, nil)
-
-	t.Run("Success update by brand", func(t *testing.T) {
-
-		claims["session_id"] = sessUUID.String()
-		claims["brand_id"] = brandUUID.String()
-		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-		validToken, _ := token.SignedString([]byte("secret"))
-
-		req := httptest.NewRequest(http.MethodPost, "/order/:id", nil)
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
-
-		handler := handlers.AcceptById()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
-
-		ctx.SetParamNames("id")
-		ctx.SetParamValues(orderUUID.String())
-
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusOK, res.Code)
+		require.Equal(t, len(orders), len(resDto.Data.([]interface{})))
 	})
 
-	t.Run("Forbidden update by other brand", func(t *testing.T) {
-
+	t.Run("FindById", func(t *testing.T) {
+		token := jwt.New(jwt.SigningMethodHS256)
+		claims := token.Claims.(jwt.MapClaims)
 		claims["session_id"] = sessUUID.String()
-		claims["brand_id"] = sessUUID.String()
+		claims["user_id"] = userUUID.String()
+		claims["role"] = models.UserRoleUser
 		claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-		validToken, _ := token.SignedString([]byte("secret"))
+		validToken, _ := token.SignedString([]byte(cfg.Server.JwtSecretKey))
 
-		req := httptest.NewRequest(http.MethodPost, "/order/:id", nil)
-		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-		req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
+		req := httptest.NewRequest(http.MethodGet, "/order?id="+m.OrderID.String(), nil)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", validToken))
+		w := httptest.NewRecorder()
 
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
+		orderUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&m, nil)
 
-		handler := handlers.AcceptById()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
+		handler := http.HandlerFunc(handlers.FindById)
+		handler.ServeHTTP(w, req)
 
-		ctx.SetParamNames("id")
-		ctx.SetParamValues(orderUUID.String())
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := ioutil.ReadAll(w.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+		require.NotNil(t, data)
+		require.Equal(t, http.StatusOK, w.Code)
 
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusForbidden, res.Code)
+		resDto := &dto.OrderResponseDto{}
+		err = json.NewDecoder(res.Body).Decode(resDto)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		require.Equal(t, m.OrderID.String(), resDto.OrderID.String())
 	})
 }

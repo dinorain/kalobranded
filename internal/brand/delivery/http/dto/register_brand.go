@@ -5,8 +5,9 @@ import (
 )
 
 type BrandRegisterRequestDto struct {
-	BrandName     string `json:"brand_name" validate:"required,lte=30"`
-	PickupAddress string `json:"pickup_address" validate:"required"`
+	BrandName     string  `json:"brand_name" validate:"required,lte=30"`
+	PickupAddress string  `json:"pickup_address" validate:"required"`
+	Logo          *string `json:"logo"`
 }
 
 type BrandRegisterResponseDto struct {

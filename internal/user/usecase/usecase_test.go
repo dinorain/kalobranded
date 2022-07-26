@@ -58,7 +58,7 @@ func TestUserUseCase_Register(t *testing.T) {
 	createdUser, err := userUC.Register(ctx, mockUser)
 	require.NoError(t, err)
 	require.NotNil(t, createdUser)
-	require.Equal(t, createdUser.UserID.String(), userID)
+	require.Equal(t, createdUser.UserID.String(), userID.String())
 }
 
 func TestUserUseCase_FindByEmail(t *testing.T) {

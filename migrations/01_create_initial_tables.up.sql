@@ -20,12 +20,13 @@ CREATE TABLE users
     updated_at TIMESTAMP WITH TIME ZONE          DEFAULT CURRENT_TIMESTAMP
 );
 
+
 DROP TABLE IF EXISTS brands CASCADE;
 CREATE TABLE brands
 (
-    brand_id  UUID PRIMARY KEY        DEFAULT uuid_generate_v4(),
-    brand_name VARCHAR(32)            NOT NULL CHECK ( first_name <> '' ),
-    logo     VARCHAR(250),
+    brand_id    UUID PRIMARY KEY      DEFAULT uuid_generate_v4(),
+    brand_name  VARCHAR(32)           NOT NULL CHECK ( first_name <> '' ),
+    logo        VARCHAR(250),
     pickup_address      VARCHAR(250)  NOT NULL CHECK ( pickup_address <> '' ),
 
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -39,17 +40,18 @@ CREATE TABLE products
     name        VARCHAR(250)  NOT NULL CHECK ( name <> '' ),
     description VARCHAR(5000) NOT NULL CHECK ( description <> '' ),
     price       NUMERIC       NOT NULL,
-    brand_id   UUID REFERENCES brands (brand_id),
+    brand_id    UUID REFERENCES brands (brand_id),
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_products__brand_id ON products(brand_id);
 
 DROP TABLE IF EXISTS orders CASCADE;
 CREATE TABLE orders
 (
     order_id    UUID PRIMARY KEY                  DEFAULT uuid_generate_v4(),
     user_id     UUID REFERENCES users (user_id),
-    brand_id   UUID REFERENCES brands (brand_id),
+    brand_id    UUID REFERENCES brands (brand_id),
     item        JSONB,
     quantity    NUMERIC       NOT NULL,
     total_price NUMERIC       NOT NULL,
@@ -61,3 +63,5 @@ CREATE TABLE orders
     created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_orders__user_id ON orders(user_id);
+CREATE INDEX idx_orders__brand_id ON orders(brand_id);

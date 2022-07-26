@@ -1,11 +1,8 @@
 package handlers
 
-func (h *productHandlersHTTP) ProductMapRoutes() {
-	h.group.Use(h.mw.IsLoggedIn())
-	h.group.GET("", h.FindAll())
-	h.group.GET("/:id", h.FindById())
+import "net/http"
 
-	h.group.POST("", h.Create(), h.mw.IsAdmin)
-	h.group.PUT("/:id", h.UpdateById(), h.mw.IsAdmin)
-	h.group.DELETE("/:id", h.DeleteById(), h.mw.IsAdmin)
+func (h *productHandlersHTTP) ProductMapRoutes() {
+	h.mux.Handle("/product", h.mw.IsAdmin(http.HandlerFunc(h.Create)))
+	h.mux.Handle("/product/brand", h.mw.GetHandler(http.HandlerFunc(h.FindAllByBrandId)))
 }

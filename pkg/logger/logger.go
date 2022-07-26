@@ -2,7 +2,6 @@ package logger
 
 import (
 	"os"
-	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -14,7 +13,7 @@ import (
 // Logger methods interface
 type Logger interface {
 	InitLogger()
-	HttpMiddlewareAccessLogger(method, uri string, status int, size int64, time time.Duration)
+	HttpMiddlewareAccessLogger(method, uri string)
 	Debug(args ...interface{})
 	Debugf(template string, args ...interface{})
 	Info(args ...interface{})
@@ -98,14 +97,11 @@ func (l *appLogger) InitLogger() {
 	}
 }
 
-func (l *appLogger) HttpMiddlewareAccessLogger(method, uri string, status int, size int64, time time.Duration) {
+func (l *appLogger) HttpMiddlewareAccessLogger(method, uri string) {
 	l.sugarLogger.Info(
 		constants.HTTP,
 		zap.String(constants.METHOD, method),
 		zap.String(constants.URI, uri),
-		zap.Int(constants.STATUS, status),
-		zap.Int64(constants.SIZE, size),
-		zap.Duration(constants.TIME, time),
 	)
 }
 

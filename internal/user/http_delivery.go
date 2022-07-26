@@ -1,16 +1,16 @@
 package user
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
+)
 
 // User HTTP Handlers interface
 type UserHandlers interface {
-	Register() echo.HandlerFunc
-	Login() echo.HandlerFunc
-	GetMe() echo.HandlerFunc
-	FindAll() echo.HandlerFunc
-	FindById() echo.HandlerFunc
-	UpdateById() echo.HandlerFunc
-	DeleteById() echo.HandlerFunc
-	Logout() echo.HandlerFunc
-	RefreshToken() echo.HandlerFunc
+	Register(w http.ResponseWriter, r *http.Request)
+	Login(w http.ResponseWriter, r *http.Request)
+	GetMe(w http.ResponseWriter, r *http.Request)
+	FindAll(w http.ResponseWriter, r *http.Request)
+	FindById(w http.ResponseWriter, r *http.Request)
+	Logout(w http.ResponseWriter, r *http.Request)
+	RefreshToken(w http.ResponseWriter, r *http.Request)
 }

@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/go-playground/validator"
-	"github.com/golang-jwt/jwt"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/require"
 
 	"github.com/dinorain/kalobranded/config"
@@ -27,7 +25,7 @@ import (
 	"github.com/dinorain/kalobranded/pkg/logger"
 )
 
-func TestBrandsHandler_Register(t *testing.T) {
+func TestBrandsHandler_Create(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -36,13 +34,14 @@ func TestBrandsHandler_Register(t *testing.T) {
 	brandUC := mock.NewMockBrandUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewBrandHandlersHTTP(e.Group("brand"), appLogger, cfg, mw, v, brandUC, sessUC)
+
+	mux := http.NewServeMux()
+	handlers := NewBrandHandlersHTTP(mux, appLogger, cfg, mw, v, brandUC, sessUC)
 
 	reqDto := &dto.BrandRegisterRequestDto{
 		BrandName:     "BrandName",
@@ -52,24 +51,38 @@ func TestBrandsHandler_Register(t *testing.T) {
 	buf := &bytes.Buffer{}
 	_ = json.NewEncoder(buf).Encode(reqDto)
 
-	req := httptest.NewRequest(http.MethodPost, "/brand", buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	userUUID := uuid.New()
+	brandUUID := uuid.New()
+	sessUUID := uuid.New()
 
-	resDto := &dto.BrandRegisterResponseDto{
-		BrandID: uuid.Nil,
+	req := httptest.NewRequest(http.MethodPost, "/brand/create", buf)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	wDto := &dto.BrandRegisterResponseDto{
+		BrandID: brandUUID,
 	}
 
-	buf, _ = converter.AnyToBytesBuffer(resDto)
+	buf, _ = converter.AnyToBytesBuffer(wDto)
 
-	brandUC.EXPECT().Register(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Brand{}, nil)
-	require.NoError(t, handlers.Register()(ctx))
-	require.Equal(t, http.StatusCreated, res.Code)
-	require.Equal(t, buf.String(), res.Body.String())
+	sessUC.EXPECT().GetSessionById(gomock.Any(), sessUUID.String()).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
+	brandUC.EXPECT().Register(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
+
+	handler := http.HandlerFunc(handlers.Create)
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	require.NotNil(t, data)
+	require.Equal(t, http.StatusCreated, w.Code)
+	require.Equal(t, strings.Trim(buf.String(), "\n"), string(data))
 }
 
-func TestBrandsHandler_FindAll(t *testing.T) {
+func TestBrandsHandler_Find(t *testing.T) {
 	t.Parallel()
 
 	ctrl := gomock.NewController(t)
@@ -78,172 +91,82 @@ func TestBrandsHandler_FindAll(t *testing.T) {
 	brandUC := mock.NewMockBrandUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
-	appLogger := logger.NewAppLogger(nil)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
+	appLogger := logger.NewAppLogger(cfg)
+	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
 
-	e := echo.New()
 	v := validator.New()
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	handlers := NewBrandHandlersHTTP(e.Group("brand"), appLogger, cfg, mw, v, brandUC, sessUC)
 
-	req := httptest.NewRequest(http.MethodGet, "/brand", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
+	mux := http.NewServeMux()
+	handlers := NewBrandHandlersHTTP(mux, appLogger, cfg, mw, v, brandUC, sessUC)
+
+	brandUUID := uuid.New()
 
 	var brands []models.Brand
-	brands = append(brands, models.Brand{
+	var oneOnly []models.Brand
+
+	m := models.Brand{
+		BrandID:       brandUUID,
+		BrandName:     "BrandName",
+		PickupAddress: "PickupAddress",
+	}
+	oneOnly = append(oneOnly, m)
+	brands = append(brands, m, models.Brand{
 		BrandID:       uuid.New(),
 		BrandName:     "BrandName",
 		PickupAddress: "PickupAddress",
 	})
 
-	brandUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(brands, nil)
-	require.NoError(t, handlers.FindAll()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
-}
+	t.Run("FindAll", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/brand", nil)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
 
-func TestBrandsHandler_FindById(t *testing.T) {
-	t.Parallel()
+		brandUC.EXPECT().FindAll(gomock.Any(), gomock.Any()).AnyTimes().Return(brands, nil)
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+		handler := http.HandlerFunc(handlers.FindAll)
+		handler.ServeHTTP(w, req)
 
-	brandUC := mock.NewMockBrandUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := ioutil.ReadAll(w.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+		require.NotNil(t, data)
+		require.Equal(t, http.StatusOK, w.Code)
 
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	appLogger := logger.NewAppLogger(cfg)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
+		resDto := &dto.BrandFindResponseDto{}
+		_ = json.Unmarshal(data, resDto)
 
-	e := echo.New()
-	v := validator.New()
-	handlers := NewBrandHandlersHTTP(e.Group("brand"), appLogger, cfg, mw, v, brandUC, sessUC)
-
-	req := httptest.NewRequest(http.MethodGet, "/brand/:id", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	ctx.SetParamNames("id")
-	ctx.SetParamValues("2ceba62a-35f4-444b-a358-4b14834837e1")
-
-	brandUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Brand{}, nil)
-	require.NoError(t, handlers.FindById()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
-}
-
-func TestBrandsHandler_UpdateById(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	brandUC := mock.NewMockBrandUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
-
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	appLogger := logger.NewAppLogger(cfg)
-	mw := middlewares.NewMiddlewareManager(appLogger, cfg)
-
-	e := echo.New()
-	e.Use(middleware.JWT([]byte("secret")))
-	v := validator.New()
-	handlers := NewBrandHandlersHTTP(e.Group("brand"), appLogger, cfg, mw, v, brandUC, sessUC)
-
-	change := "changed"
-	reqDto := &dto.BrandUpdateRequestDto{
-		BrandName:     &change,
-		PickupAddress: &change,
-		Logo:          &change,
-	}
-
-	buf := &bytes.Buffer{}
-	_ = json.NewEncoder(buf).Encode(reqDto)
-
-	brandUUID := uuid.New()
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["session_id"] = uuid.New().String()
-	claims["brand_id"] = brandUUID.String()
-	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
-	validToken, _ := token.SignedString([]byte("secret"))
-
-	req := httptest.NewRequest(http.MethodPost, "/brand/:id", buf)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	req.Header.Set(echo.HeaderAuthorization, fmt.Sprintf("bearer %v", validToken))
-
-	t.Run("Forbidden update by other brand", func(t *testing.T) {
-		t.Parallel()
-
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
-
-		handler := handlers.UpdateById()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
-
-		ctx.SetParamNames("id")
-		ctx.SetParamValues("2ceba62a-35f4-444b-a358-4b14834837e1")
-
-		brandUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
-
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusForbidden, res.Code)
+		require.Equal(t, len(brands), len(resDto.Data.([]interface{})))
 	})
 
-	t.Run("Success", func(t *testing.T) {
-		t.Parallel()
+	t.Run("FindById", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/brand?id="+m.BrandID.String(), nil)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
 
-		res := httptest.NewRecorder()
-		ctx := e.NewContext(req, res)
+		brandUC.EXPECT().CachedFindById(gomock.Any(), gomock.Any()).AnyTimes().Return(&m, nil)
 
-		handler := handlers.UpdateById()
-		h := middleware.JWTWithConfig(middleware.JWTConfig{
-			Claims:     claims,
-			SigningKey: []byte("secret"),
-		})(handler)
+		handler := http.HandlerFunc(handlers.FindAll)
+		handler.ServeHTTP(w, req)
 
-		ctx.SetParamNames("id")
-		ctx.SetParamValues(brandUUID.String())
+		res := w.Result()
+		defer res.Body.Close()
+		data, err := ioutil.ReadAll(w.Body)
+		if err != nil {
+			t.Errorf("expected error to be nil got %v", err)
+		}
+		require.NotNil(t, data)
+		require.Equal(t, http.StatusOK, w.Code)
 
-		brandUC.EXPECT().UpdateById(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
-		brandUC.EXPECT().FindById(gomock.Any(), brandUUID).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
+		resDto := &dto.BrandResponseDto{}
+		err = json.NewDecoder(res.Body).Decode(resDto)
+		if err != nil {
+			fmt.Println(err)
+		}
 
-		require.NoError(t, h(ctx))
-		require.Equal(t, http.StatusOK, res.Code)
+		require.Equal(t, m.BrandID.String(), resDto.BrandID.String())
 	})
-}
-
-func TestBrandsHandler_DeleteById(t *testing.T) {
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	brandUC := mock.NewMockBrandUseCase(ctrl)
-	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
-
-	cfg := &config.Config{Session: config.Session{Expire: 1234}}
-	appLogger := logger.NewAppLogger(cfg)
-	mw := middlewares.NewMiddlewareManager(appLogger, nil)
-
-	e := echo.New()
-	v := validator.New()
-	handlers := NewBrandHandlersHTTP(e.Group("brand"), appLogger, cfg, mw, v, brandUC, sessUC)
-
-	req := httptest.NewRequest(http.MethodDelete, "/brand/:id", nil)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	res := httptest.NewRecorder()
-	ctx := e.NewContext(req, res)
-
-	brandUUID := uuid.New()
-	ctx.SetParamNames("id")
-	ctx.SetParamValues(brandUUID.String())
-
-	brandUC.EXPECT().DeleteById(gomock.Any(), brandUUID).AnyTimes().Return(nil)
-	require.NoError(t, handlers.DeleteById()(ctx))
-	require.Equal(t, http.StatusOK, res.Code)
 }

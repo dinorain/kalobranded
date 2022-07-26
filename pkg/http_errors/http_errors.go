@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/go-playground/validator"
-	"github.com/labstack/echo/v4"
 )
 
 const (
@@ -106,7 +105,7 @@ func NewRestErrorFromBytes(bytes []byte) (RestErr, error) {
 }
 
 // NewBadRequestError New Bad Request Error
-func NewBadRequestError(ctx echo.Context, causes interface{}, debug bool) error {
+func NewBadRequestError(w http.ResponseWriter, causes interface{}, debug bool) error {
 	restError := RestError{
 		ErrStatus: http.StatusBadRequest,
 		ErrError:  BadRequest.Error(),
@@ -115,11 +114,36 @@ func NewBadRequestError(ctx echo.Context, causes interface{}, debug bool) error 
 	if debug {
 		restError.ErrMessage = causes
 	}
-	return ctx.JSON(http.StatusBadRequest, restError)
+	if b, err := json.Marshal(restError); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write(b)
+	}
+	return restError
+}
+
+// NewStatusMethodNotAllowedError New Status Method Not Allowed Error
+func NewStatusMethodNotAllowedError(w http.ResponseWriter, causes interface{}, debug bool) error {
+	restError := RestError{
+		ErrStatus: http.StatusMethodNotAllowed,
+		ErrError:  BadRequest.Error(),
+		Timestamp: time.Now().UTC(),
+	}
+	if debug {
+		restError.ErrMessage = causes
+	}
+	if b, err := json.Marshal(restError); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write(b)
+	}
+	return restError
 }
 
 // NewNotFoundError New Not Found Error
-func NewNotFoundError(ctx echo.Context, causes interface{}, debug bool) error {
+func NewNotFoundError(w http.ResponseWriter, causes interface{}, debug bool) error {
 	restError := RestError{
 		ErrStatus: http.StatusNotFound,
 		ErrError:  NotFound.Error(),
@@ -128,11 +152,17 @@ func NewNotFoundError(ctx echo.Context, causes interface{}, debug bool) error {
 	if debug {
 		restError.ErrMessage = causes
 	}
-	return ctx.JSON(http.StatusNotFound, restError)
+	if b, err := json.Marshal(restError); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(b)
+	}
+	return restError
 }
 
 // NewUnauthorizedError New Unauthorized Error
-func NewUnauthorizedError(ctx echo.Context, causes interface{}, debug bool) error {
+func NewUnauthorizedError(w http.ResponseWriter, causes interface{}, debug bool) error {
 
 	restError := RestError{
 		ErrStatus: http.StatusUnauthorized,
@@ -142,11 +172,18 @@ func NewUnauthorizedError(ctx echo.Context, causes interface{}, debug bool) erro
 	if debug {
 		restError.ErrMessage = causes
 	}
-	return ctx.JSON(http.StatusUnauthorized, restError)
+
+	if b, err := json.Marshal(restError); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(b)
+	}
+	return restError
 }
 
 // NewForbiddenError New Forbidden Error
-func NewForbiddenError(ctx echo.Context, causes interface{}, debug bool) error {
+func NewForbiddenError(w http.ResponseWriter, causes interface{}, debug bool) error {
 
 	restError := RestError{
 		ErrStatus: http.StatusForbidden,
@@ -156,11 +193,17 @@ func NewForbiddenError(ctx echo.Context, causes interface{}, debug bool) error {
 	if debug {
 		restError.ErrMessage = causes
 	}
-	return ctx.JSON(http.StatusForbidden, restError)
+	if b, err := json.Marshal(restError); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write(b)
+	}
+	return restError
 }
 
 // NewInternalServerError New Internal Server Error
-func NewInternalServerError(ctx echo.Context, causes interface{}, debug bool) error {
+func NewInternalServerError(w http.ResponseWriter, causes interface{}, debug bool) error {
 
 	restError := RestError{
 		ErrStatus: http.StatusInternalServerError,
@@ -170,7 +213,21 @@ func NewInternalServerError(ctx echo.Context, causes interface{}, debug bool) er
 	if debug {
 		restError.ErrMessage = causes
 	}
-	return ctx.JSON(http.StatusInternalServerError, restError)
+	if b, err := json.Marshal(restError.Causes()); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(b)
+	}
+	return nil
+
+	if b, err := json.Marshal(restError); err != nil {
+		return err
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(b)
+	}
+	return restError
 }
 
 // ParseErrors Parser of error string messages returns RestError
@@ -237,7 +294,13 @@ func ErrorResponse(err error, debug bool) (int, interface{}) {
 }
 
 // ErrorCtxResponse Error response object and status code
-func ErrorCtxResponse(ctx echo.Context, err error, debug bool) error {
-	restErr := ParseErrors(err, debug)
-	return ctx.JSON(restErr.Status(), restErr)
+func ErrorCtxResponse(w http.ResponseWriter, err error, debug bool) error {
+	restError := ParseErrors(err, debug)
+	if b, err := json.Marshal(restError.Status()); err != nil {
+		return err
+	} else {
+		w.WriteHeader(restError.Status())
+		w.Write(b)
+	}
+	return restError
 }

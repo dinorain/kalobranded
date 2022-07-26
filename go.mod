@@ -17,12 +17,12 @@ require (
 	github.com/gomodule/redigo v1.8.9 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/labstack/echo/v4 v4.7.2
 	github.com/lib/pq v1.2.0
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.1
-	github.com/swaggo/echo-swagger v1.3.3
+	github.com/swaggo/http-swagger v1.3.0
 	github.com/swaggo/swag v1.8.3
 	github.com/yuin/gopher-lua v0.0.0-20220504180219-658193537a64 // indirect
 	go.uber.org/zap v1.17.0
@@ -30,7 +30,6 @@ require (
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/sys v0.0.0-20220708085239-5a0f0661e09d // indirect
 	golang.org/x/tools v0.1.11 // indirect
-	google.golang.org/grpc v1.46.2
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

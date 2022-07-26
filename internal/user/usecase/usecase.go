@@ -12,7 +12,6 @@ import (
 	"github.com/dinorain/kalobranded/config"
 	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/internal/user"
-	"github.com/dinorain/kalobranded/pkg/grpc_errors"
 	"github.com/dinorain/kalobranded/pkg/logger"
 	"github.com/dinorain/kalobranded/pkg/utils"
 )
@@ -40,7 +39,7 @@ func NewUserUseCase(cfg *config.Config, logger logger.Logger, userRepo user.User
 func (u *userUseCase) Register(ctx context.Context, user *models.User) (*models.User, error) {
 	existsUser, err := u.userPgRepo.FindByEmail(ctx, user.Email)
 	if existsUser != nil || err == nil {
-		return nil, grpc_errors.ErrEmailExists
+		return nil, errors.New("Email already exists")
 	}
 
 	return u.userPgRepo.Create(ctx, user)

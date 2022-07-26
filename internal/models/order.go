@@ -18,7 +18,7 @@ const (
 type Order struct {
 	OrderID                    uuid.UUID `json:"order_id" db:"order_id"`
 	UserID                     uuid.UUID `json:"user_id" db:"user_id"`
-	BrandID                   uuid.UUID `json:"brand_id" db:"brand_id"`
+	BrandID                    uuid.UUID `json:"brand_id" db:"brand_id"`
 	Item                       OrderItem `json:"item" db:"item"`
 	Quantity                   uint64    `json:"quantity" db:"quantity"`
 	TotalPrice                 float64   `json:"total_price" db:"total_price"`
@@ -46,5 +46,5 @@ func (o *OrderItem) Scan(value interface{}) error {
 
 func (o OrderItem) Value() (driver.Value, error) {
 	valueJson, _ := json.Marshal(o)
-	return string(valueJson), nil
+	return valueJson, nil
 }

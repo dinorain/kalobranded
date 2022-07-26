@@ -49,6 +49,7 @@ func main() {
 		appLogger.Fatalf("Postgresql init: %s", err)
 	}
 	defer psqlDB.Close()
+	appLogger.Info("Postgresql connected")
 
 	authServer := server.NewAppServer(appLogger, cfg, psqlDB, redisClient)
 	appLogger.Fatal(authServer.Run())
