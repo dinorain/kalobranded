@@ -90,7 +90,7 @@ func (s *Server) Run() error {
 	brandHandlers := brandDeliveryHTTP.NewBrandHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, brandUC, sessUC)
 	brandHandlers.BrandMapRoutes()
 
-	productHandlers := productDeliveryHTTP.NewProductHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, productUC, sessUC)
+	productHandlers := productDeliveryHTTP.NewProductHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, brandUC, productUC, sessUC)
 	productHandlers.ProductMapRoutes()
 
 	orderHandlers := orderDeliveryHTTP.NewOrderHandlersHTTP(s.mux, s.logger, s.cfg, s.mw, s.v, orderUC, userUC, brandUC, productUC, sessUC)
