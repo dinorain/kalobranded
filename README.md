@@ -7,6 +7,7 @@
 * Token-based authentication, and save auth session too
 
 #### What have been used:
+* [net/http](https://pkg.go.dev/net/http#NewServeMux) - Standard library as multiplexer or router
 * [sqlx](https://github.com/jmoiron/sqlx) - Extensions to database/sql.
 * [pgx](https://github.com/jackc/pgx) - PostgreSQL driver and toolkit for Go
 * [JWT](https://github.com/golang-jwt/jwt) - A Go implementation of JSON Web Tokens.
