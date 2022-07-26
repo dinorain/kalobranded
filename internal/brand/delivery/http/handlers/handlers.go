@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-playground/validator"
@@ -57,16 +56,17 @@ func NewBrandHandlersHTTP(
 func (h *brandHandlersHTTP) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	createDto := &dto.BrandRegisterRequestDto{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&createDto); err != nil {
+		h.logger.Errorf("decoder.Decode: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
-	createDto := &dto.BrandRegisterRequestDto{}
-	err = json.Unmarshal(b, &createDto)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	if err := h.v.Struct(createDto); err != nil {
+		h.logger.Errorf("h.v.Struct: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 

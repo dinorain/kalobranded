@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/go-playground/validator"
@@ -60,16 +59,18 @@ func NewUserHandlersHTTP(
 // @Router /user/create [post]
 func (h *userHandlersHTTP) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+
+	createDto := &dto.UserRegisterRequestDto{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&createDto); err != nil {
+		h.logger.Errorf("decoder.Decode: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
-	createDto := &dto.UserRegisterRequestDto{}
-	err = json.Unmarshal(b, &createDto)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	if err := h.v.Struct(createDto); err != nil {
+		h.logger.Errorf("h.v.Struct: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
@@ -106,16 +107,17 @@ func (h *userHandlersHTTP) Register(w http.ResponseWriter, r *http.Request) {
 func (h *userHandlersHTTP) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	loginDto := &dto.UserLoginRequestDto{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&loginDto); err != nil {
+		h.logger.Errorf("decoder.Decode: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
-	loginDto := &dto.UserLoginRequestDto{}
-	err = json.Unmarshal(b, &loginDto)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	if err := h.v.Struct(loginDto); err != nil {
+		h.logger.Errorf("h.v.Struct: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
@@ -317,16 +319,17 @@ func (h *userHandlersHTTP) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *userHandlersHTTP) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	refreshTokenDto := &dto.UserRefreshTokenDto{}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&refreshTokenDto); err != nil {
+		h.logger.Errorf("decoder.Decode: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
-	refreshTokenDto := &dto.UserRefreshTokenDto{}
-	err = json.Unmarshal(b, &refreshTokenDto)
-	if err != nil {
-		_ = httpErrors.NewBadRequestError(w, err, h.cfg.Http.DebugErrorsResponse)
+	if err := h.v.Struct(refreshTokenDto); err != nil {
+		h.logger.Errorf("h.v.Struct: %v", err)
+		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
