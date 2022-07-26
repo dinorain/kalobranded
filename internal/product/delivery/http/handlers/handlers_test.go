@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/dinorain/kalobranded/config"
+	mockBrandUC "github.com/dinorain/kalobranded/internal/brand/mock"
 	"github.com/dinorain/kalobranded/internal/middlewares"
 	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/internal/product/delivery/http/dto"
@@ -32,6 +33,7 @@ func TestProductsHandler_Create(t *testing.T) {
 	defer ctrl.Finish()
 
 	productUC := mock.NewMockProductUseCase(ctrl)
+	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
 	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
@@ -41,21 +43,22 @@ func TestProductsHandler_Create(t *testing.T) {
 	v := validator.New()
 
 	mux := http.NewServeMux()
-	handlers := NewProductHandlersHTTP(mux, appLogger, cfg, mw, v, productUC, sessUC)
-
-	reqDto := &dto.ProductCreateRequestDto{
-		Name:        "Name",
-		Description: "Description",
-		Price:       10000.0,
-	}
-
-	buf := &bytes.Buffer{}
-	_ = json.NewEncoder(buf).Encode(reqDto)
+	handlers := NewProductHandlersHTTP(mux, appLogger, cfg, mw, v, brandUC, productUC, sessUC)
 
 	userUUID := uuid.New()
 	brandUUID := uuid.New()
 	sessUUID := uuid.New()
 	productUUID := uuid.New()
+
+	reqDto := &dto.ProductCreateRequestDto{
+		Name:        "Name",
+		Description: "Description",
+		Price:       10000.0,
+		BrandID:     brandUUID,
+	}
+
+	buf := &bytes.Buffer{}
+	_ = json.NewEncoder(buf).Encode(reqDto)
 
 	req := httptest.NewRequest(http.MethodPost, "/product/create", buf)
 	req.Header.Set("Content-Type", "application/json")
@@ -68,6 +71,7 @@ func TestProductsHandler_Create(t *testing.T) {
 	buf, _ = converter.AnyToBytesBuffer(wDto)
 
 	sessUC.EXPECT().GetSessionById(gomock.Any(), sessUUID.String()).AnyTimes().Return(&models.Session{UserID: userUUID, SessionID: sessUUID.String()}, nil)
+	brandUC.EXPECT().CachedFindById(gomock.Any(), brandUUID).AnyTimes().Return(&models.Brand{BrandID: brandUUID}, nil)
 	productUC.EXPECT().Create(gomock.Any(), gomock.Any()).AnyTimes().Return(&models.Product{ProductID: productUUID, BrandID: brandUUID}, nil)
 
 	handler := http.HandlerFunc(handlers.Create)
@@ -91,6 +95,7 @@ func TestProductsHandler_Find(t *testing.T) {
 	defer ctrl.Finish()
 
 	productUC := mock.NewMockProductUseCase(ctrl)
+	brandUC := mockBrandUC.NewMockBrandUseCase(ctrl)
 	sessUC := mockSessUC.NewMockSessUseCase(ctrl)
 
 	cfg := &config.Config{Session: config.Session{Expire: 1234}, Server: config.ServerConfig{JwtSecretKey: "secret"}}
@@ -100,7 +105,7 @@ func TestProductsHandler_Find(t *testing.T) {
 	v := validator.New()
 
 	mux := http.NewServeMux()
-	handlers := NewProductHandlersHTTP(mux, appLogger, cfg, mw, v, productUC, sessUC)
+	handlers := NewProductHandlersHTTP(mux, appLogger, cfg, mw, v, brandUC, productUC, sessUC)
 
 	brandUUID := uuid.New()
 

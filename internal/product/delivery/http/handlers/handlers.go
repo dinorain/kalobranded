@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/dinorain/kalobranded/config"
+	"github.com/dinorain/kalobranded/internal/brand"
 	"github.com/dinorain/kalobranded/internal/middlewares"
 	"github.com/dinorain/kalobranded/internal/models"
 	"github.com/dinorain/kalobranded/internal/product"
@@ -25,6 +26,7 @@ type productHandlersHTTP struct {
 	cfg       *config.Config
 	mw        middlewares.MiddlewareManager
 	v         *validator.Validate
+	brandUC   brand.BrandUseCase
 	productUC product.ProductUseCase
 	sessUC    session.SessUseCase
 }
@@ -37,10 +39,11 @@ func NewProductHandlersHTTP(
 	cfg *config.Config,
 	mw middlewares.MiddlewareManager,
 	v *validator.Validate,
+	brandUC brand.BrandUseCase,
 	productUC product.ProductUseCase,
 	sessUC session.SessUseCase,
 ) *productHandlersHTTP {
-	return &productHandlersHTTP{mux: mux, logger: logger, cfg: cfg, mw: mw, v: v, productUC: productUC, sessUC: sessUC}
+	return &productHandlersHTTP{mux: mux, logger: logger, cfg: cfg, mw: mw, v: v, brandUC: brandUC, productUC: productUC, sessUC: sessUC}
 }
 
 // Create
@@ -67,6 +70,12 @@ func (h *productHandlersHTTP) Create(w http.ResponseWriter, r *http.Request) {
 	if err := h.v.Struct(createDto); err != nil {
 		h.logger.Errorf("h.v.Struct: %v", err)
 		_ = httpErrors.NewBadRequestError(w, err.Error(), h.cfg.Http.DebugErrorsResponse)
+		return
+	}
+
+	if _, err := h.brandUC.CachedFindById(ctx, createDto.BrandID); err != nil {
+		h.logger.Errorf("brandUC.CachedFindById: %v", err)
+		httpErrors.ErrorCtxResponse(w, err, h.cfg.Http.DebugErrorsResponse)
 		return
 	}
 
