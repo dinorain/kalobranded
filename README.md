@@ -1,5 +1,11 @@
 ### Kalobranded: Go REST example for branded product checkout service
 
+#### Assumptions:
+* Each brand has it own `pickup_address`
+* Validations for related resource are done in delivery layer.  e.g. `brand_id` in product create.
+* Two roles are available for table `users`, which are "admin" and "user". Anyway, records of either roles can be created from guest http API. 
+* Token-based authentication, and save auth session too
+
 #### What have been used:
 * [sqlx](https://github.com/jmoiron/sqlx) - Extensions to database/sql.
 * [pgx](https://github.com/jackc/pgx) - PostgreSQL driver and toolkit for Go
@@ -15,15 +21,35 @@
 * [Docker](https://www.docker.com/) - Docker
 
 #### Docker compose files:
-    docker-compose.local.yml
-    docker-compose.dev.yml
+```sh
+docker-compose.local.yml
+```
+or
+```sh
+docker-compose.dev.yml
+```
 
 ### Docker development usage:
-    make develop
+```sh
+make develop
+```
 
-### Local development usage:
-    make local
-    make run
+### Local development usages:
+```sh
+make local
+```
+or
+```sh
+make run
+```
+    
+#### How to
+After deployment, run 
+```sh
+make migrate_up
+```
+
+Register admin and buyer user from http://localhost:5001/user/create
 
 ### Swagger:
 
